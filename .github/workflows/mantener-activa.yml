@@ -1,0 +1,21 @@
+# Supabase (plan gratuito) pausa la base si pasa 7 días sin uso.
+# Este proceso la consulta cada 3 días para que siga activa.
+name: Mantener activa la base
+on:
+  schedule:
+    - cron: '17 13 */3 * *'
+  workflow_dispatch:
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Consultar la base
+        run: |
+          node -e "
+            global.window = {}; require('./config.js'); const c = window.POI_CONFIG;
+            fetch(c.url + '/rest/v1/rpc/poi_api', { method: 'POST',
+              headers: { apikey: c.key, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ p: { accion: 'ping' } }) })
+            .then(r => r.text()).then(t => { console.log(t); if (!t.includes('\"ok\": true') && !t.includes('\"ok\":true')) process.exit(1); });
+          "
