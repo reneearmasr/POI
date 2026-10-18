@@ -85,6 +85,17 @@ td input.mi:focus{outline:2px solid var(--acc2);border-color:var(--acc)}
 .lst .top{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .lst .top b{font-family:'IBM Plex Mono',monospace}
 .empty{color:var(--mut);padding:14px 0}
+.pnl-f{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 10px}
+.pnl-f button{border:1px solid var(--line);background:var(--card);color:var(--ink2);padding:5px 12px;border-radius:999px;font-size:12px;cursor:pointer}
+.pnl-f button.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.pnl-f input{flex:1;min-width:160px;max-width:280px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;font:inherit}
+table.pnl tbody tr{cursor:pointer}
+table.pnl tbody tr:hover td{background:var(--acc2)}
+table.pnl .av{display:flex;align-items:center;gap:8px;justify-content:flex-end}
+table.pnl .av .bar{width:70px;margin:0;flex:none}
+table.pnl .uo{font-size:11px;color:var(--mut);max-width:260px;white-space:normal;line-height:1.3;margin-top:2px}
+table.pnl td.nw{white-space:nowrap}
+.kpi .s{font-size:12px;color:var(--mut);margin-top:2px}
 .dlg{position:fixed;inset:0;background:rgba(20,33,61,.45);display:flex;align-items:flex-start;justify-content:center;padding:60px 16px;z-index:50;overflow:auto}
 .dlg .panel{width:100%;max-width:440px}
 .dlg h3{font-size:14px;margin:16px 0 6px}
@@ -265,11 +276,11 @@ function cargar() {
     S.data = j; S.sesion = j.sesion; S.seq = S.seq || 0;
     (S.data.tareas = S.data.tareas || []).forEach(function (t) { t.k = 's' + (++S.seq); }); (S.data.recursos = S.data.recursos || []).forEach(function (r) { r.k = 's' + (++S.seq); });
     $('login').classList.add('hidden'); $('app').classList.remove('hidden');
-    $('hArea').textContent = j.sesion.rol === 'OPP' ? 'OPP · ' + (j.sesion.cc || 'elige un centro de costo') : j.sesion.cc + ' · ' + j.sesion.nombre;
+    $('hArea').textContent = j.sesion.rol === 'OPP' ? 'OPP · ' + (j.sesion.cc || 'Panel general') : j.sesion.cc + ' · ' + j.sesion.nombre;
     var sel = $('selCc');
     if (j.sesion.rol === 'OPP') {
       sel.classList.remove('hidden');
-      sel.innerHTML = '<option value="">Centro de costo…</option>' + j.centros.map(function (c) { return '<option' + (c === S.cc ? ' selected' : '') + '>' + esc(c) + '</option>'; }).join('');
+      sel.innerHTML = '<option value="">Panel general</option>' + j.centros.map(function (c) { return '<option' + (c === S.cc ? ' selected' : '') + '>' + esc(c) + '</option>'; }).join('');
     }
     $('bExp').classList.toggle('hidden', j.sesion.rol !== 'OPP');
     pintarProg(); pintarNmp(); pintarBandeja();
@@ -322,8 +333,37 @@ function pintarKpis() {
     '<div class="kpi"><div class="l">Programado por meses (PM3)</div><div class="v num">S/ ' + fmt(prog) + '</div><div class="bar"><i style="width:' + pct + '%"></i></div></div>' +
     '<div class="kpi"><div class="l">Actividades completas</div><div class="v">' + comp + ' de ' + d.aos.length + '</div></div>';
 }
+function estPanel(r) { return !r.cargadas ? 'sin' : (r.completas === r.aos ? 'ok' : 'proc'); }
+function pintarPanel() {
+  var rows = S.data.panel || [], T = { aos: 0, car: 0, comp: 0, apm: 0, prog: 0, dem: 0, nmp: 0, ccCar: 0 };
+  rows.forEach(function (r) { T.aos += r.aos; T.car += r.cargadas; T.comp += r.completas; T.apm += +r.apm_2027; T.prog += +r.prog_2027; T.dem += +r.demanda_2027; T.nmp += r.nmp_pendientes; if (r.cargadas) T.ccCar++; });
+  var pct = function (a, b) { return b ? Math.min(100, Math.round(a / b * 100)) : 0; };
+  var pctTxt = function (a, b) { var v = b ? a / b * 100 : 0; return v > 0 && v < 1 ? '<1%' : Math.min(100, Math.round(v)) + '%'; };
+  $('kpis').innerHTML =
+    '<div class="kpi"><div class="l">Centros de costo con carga</div><div class="v">' + T.ccCar + ' de ' + rows.length + '</div><div class="bar"><i style="width:' + pct(T.ccCar, rows.length) + '%"></i></div></div>' +
+    '<div class="kpi"><div class="l">Actividades cargadas</div><div class="v">' + T.car + ' de ' + T.aos + '</div><div class="s">' + T.comp + ' completas</div></div>' +
+    '<div class="kpi"><div class="l">Programado 2027 (PM3)</div><div class="v num">S/ ' + fmt(T.prog) + '</div><div class="s">' + pctTxt(T.prog, T.apm) + ' de la APM (S/ ' + fmt(T.apm) + ')</div><div class="bar"><i style="width:' + pct(T.prog, T.apm) + '%"></i></div></div>' +
+    '<div class="kpi"><div class="l">Demanda adicional 2027</div><div class="v num">S/ ' + fmt(T.dem) + '</div><div class="s">Fuera de la APM</div></div>' +
+    '<div class="kpi"><div class="l">NMP por revisar</div><div class="v">' + T.nmp + '</div><div class="s">' + (T.nmp ? 'Ver pestaña Modificaciones' : 'Sin pendientes') + '</div></div>';
+  S.pf = S.pf || 'todos'; S.pq = S.pq || '';
+  var etq = { sin: '<span class="chip warn">Sin carga</span>', proc: '<span class="chip info">En proceso</span>', ok: '<span class="chip ok">Completo</span>' };
+  var cnt = { todos: rows.length, sin: 0, proc: 0, ok: 0 }; rows.forEach(function (r) { cnt[estPanel(r)]++; });
+  var q = norm(S.pq), vis = rows.filter(function (r) { return (S.pf === 'todos' || estPanel(r) === S.pf) && (!q || norm(r.cc + ' ' + r.uo).indexOf(q) >= 0); });
+  $('aoList').innerHTML = '<div class="panel"><h2>Panel de control · POI 2027</h2><p class="sub">Avance de la programación por centro de costo. Haz clic en una fila para abrir sus actividades.</p>' +
+    '<div class="pnl-f">' + [['todos', 'Todos'], ['sin', 'Sin carga'], ['proc', 'En proceso'], ['ok', 'Completos']].map(function (f) { return '<button type="button" data-f="' + f[0] + '" class="' + (S.pf === f[0] ? 'on' : '') + '">' + f[1] + ' (' + cnt[f[0]] + ')</button>'; }).join('') +
+    '<input id="pnlQ" placeholder="Buscar centro de costo o unidad" value="' + esc(S.pq) + '"></div>' +
+    '<div class="tw"><table class="pnl"><thead><tr><th class="l">Centro de costo</th><th>Actividades<br>cargadas</th><th>Completas</th><th>APM 2027 (S/)</th><th>Programado 2027 (S/)</th><th>Avance</th><th>Demanda<br>adicional (S/)</th><th>Última carga</th><th>Estado</th></tr></thead><tbody>' +
+    (vis.length ? vis.map(function (r) { var p = pct(+r.prog_2027, +r.apm_2027); return '<tr data-cc="' + esc(r.cc) + '"><td class="l"><b>' + esc(r.cc) + '</b><div class="uo">' + esc(r.uo) + '</div></td><td class="num">' + r.cargadas + ' de ' + r.aos + '</td><td class="num">' + r.completas + '</td><td class="num">' + fmt(r.apm_2027) + '</td><td class="num">' + fmt(r.prog_2027) + '</td><td><div class="av"><div class="bar"><i style="width:' + p + '%"></i></div><span class="num">' + pctTxt(+r.prog_2027, +r.apm_2027) + '</span></div></td><td class="num">' + (+r.demanda_2027 ? fmt(r.demanda_2027) : '—') + '</td><td class="num nw">' + esc(r.actualizado || '—') + '</td><td>' + etq[estPanel(r)] + '</td></tr>'; }).join('')
+      : '<tr><td class="l" colspan="9" style="color:var(--mut)">Ningún centro de costo coincide.</td></tr>') +
+    '</tbody></table></div></div>';
+  $('aoList').querySelectorAll('.pnl-f button').forEach(function (b) { b.onclick = function () { S.pf = b.dataset.f; pintarPanel(); }; });
+  var qi = $('pnlQ'); qi.oninput = function () { S.pq = qi.value; var pos = qi.selectionStart; pintarPanel(); var n = $('pnlQ'); n.focus(); n.setSelectionRange(pos, pos); };
+  $('aoList').querySelectorAll('tr[data-cc]').forEach(function (tr) { tr.onclick = function () { S.cc = tr.dataset.cc; cargar(); }; });
+}
 function pintarProg() {
-  var d = S.data; pintarKpis();
+  var d = S.data;
+  if (S.sesion.rol === 'OPP' && !S.cc) { pintarPanel(); return; }
+  pintarKpis();
   var imp = S.sesion.rol === 'OPP' && S.cc ? '<div class="panel imp"><b>Importar Excel PM (PM1, PM2, PM3)</b> <span class="hint">Carga el archivo que entregó el área; reemplaza la programación de la actividad que coincida por sec_func.</span><div class="acts"><input type="file" id="fImp" accept=".xlsx,.xls"><span class="msg" id="impMsg"></span></div><div id="impPrev"></div></div>' : '';
   if (!d.aos.length) { $('aoList').innerHTML = '<p class="empty">' + (S.sesion.rol === 'OPP' ? 'Elige un centro de costo arriba.' : 'No hay actividades registradas para tu centro de costo.') + '</p>'; return; }
   $('aoList').innerHTML = imp + d.aos.map(htmlAo).join('');

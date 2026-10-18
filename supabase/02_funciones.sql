@@ -167,7 +167,8 @@ begin
   end if;
   if coalesce(cc, '') = '' then
     return jsonb_build_object('ok', true, 'sesion', ses, 'centros', centros, 'aos', '[]'::jsonb, 'partidas', '[]'::jsonb,
-                              'tareas', '[]'::jsonb, 'recursos', '[]'::jsonb, 'nmp', '[]'::jsonb, 'bandeja', bandeja);
+                              'tareas', '[]'::jsonb, 'recursos', '[]'::jsonb, 'nmp', '[]'::jsonb, 'bandeja', bandeja,
+                              'panel', case when s ->> 'r' = 'OPP' then poi.panel() else '[]'::jsonb end);
   end if;
 
   select coalesce(jsonb_agg(jsonb_build_object(
