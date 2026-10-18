@@ -198,6 +198,40 @@ table.pnl tbody tr:hover td{background:var(--acc2)}
 .rl-v .n b{color:var(--warn)}
 @media(max-width:640px){.rl{grid-template-columns:1fr;gap:8px}.kpi .v{font-size:24px}}
 @media(prefers-reduced-motion:no-preference){.rl-bar i{transition:width .5s ease}}
+/* Historial */
+#bHist[aria-pressed="true"]{background:#fff;color:var(--ink);border-color:#fff}
+.h-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.h-f{display:grid;grid-template-columns:repeat(3,minmax(120px,170px)) minmax(180px,1fr) auto;gap:10px;align-items:end;margin:14px 0 18px}
+.h-f label{font-size:12px;color:var(--mut);display:flex;flex-direction:column;gap:4px;margin:0}
+.h-f .inp{padding:0 9px;height:36px;box-sizing:border-box}
+.hl{display:grid;grid-template-columns:92px 1fr;gap:0 18px;position:relative}
+.hl-t{text-align:right;padding:12px 0;font-family:'IBM Plex Sans Condensed','IBM Plex Sans',sans-serif}
+.hl-t b{display:block;font-size:15px;color:var(--ink)}
+.hl-t span{font-size:12px;color:var(--mut);font-variant-numeric:tabular-nums}
+.hl-b{border-left:3px solid var(--line);padding:12px 0 14px 20px;position:relative;min-width:0}
+.hl-b::before{content:"";position:absolute;left:-8px;top:16px;width:13px;height:13px;border-radius:50%;background:#fff;border:3px solid var(--acc)}
+.hl.k-imp .hl-b::before{border-color:var(--ink)}
+.hl.k-nmp .hl-b::before{border-color:var(--amb)}
+.hl.k-sis .hl-b::before{border-color:var(--mut)}
+.hl-h{font-weight:600;color:var(--ink);font-size:15px}
+.hl-h .id{color:var(--acc)}
+.hl-m{font-size:13px;color:var(--mut);margin-top:2px}
+.hl-c{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center}
+.hl-c button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:3px 10px;font-size:12px;color:var(--acc);font-weight:600}
+.hl-c button:hover{border-color:var(--acc)}
+.hl-d{margin-top:10px;overflow-x:auto;max-width:100%}
+.hl-d table{width:100%;border-collapse:collapse;font-size:13px}
+.hl-d th{text-align:left;font-weight:600;color:var(--mut);font-size:12px;padding:6px 8px;border-bottom:1px solid var(--line)}
+.hl-d td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left;white-space:normal}
+.hl-d td.r{min-width:220px;max-width:420px}
+.hl-d td:nth-child(n+3){min-width:110px}
+.hl-d td.r small{display:block;color:var(--mut);font-size:11px}
+.hl-d .a{color:var(--mut);text-decoration:line-through;text-decoration-color:rgba(102,116,138,.5)}
+.hl-d .v{color:var(--ink);font-weight:600}
+.hl-d .nv{color:var(--ok);font-weight:600}
+.hl-d .num{font-variant-numeric:tabular-nums;white-space:nowrap}
+.hl-day{font-family:'IBM Plex Sans Condensed','IBM Plex Sans',sans-serif;font-size:13px;font-weight:600;color:var(--ink2);margin:14px 0 2px 110px}
+@media (max-width:760px){.h-f{grid-template-columns:1fr 1fr}.h-f .q,.h-f button{grid-column:1/-1}.hl{grid-template-columns:1fr}.hl-t{text-align:left;padding:10px 0 0 23px}.hl-t b{display:inline;margin-right:6px}.hl-day{margin-left:0}.hl-d{overflow-x:auto}}
 </style>
 </head>
 <body>
@@ -222,6 +256,7 @@ table.pnl tbody tr:hover td{background:var(--acc2)}
     <span class="sp"></span>
     <select id="selPer" class="hidden" aria-label="Periodo"></select>
     <select id="selCc" class="hidden" aria-label="Centro de costo"></select>
+    <button id="bHist" type="button" aria-pressed="false">Historial</button>
     <button id="bExp" class="hidden" type="button">Descargar Excel</button>
     <button id="bClave" type="button">Contraseña</button>
     <button id="bOut">Salir</button>
@@ -235,6 +270,20 @@ table.pnl tbody tr:hover td{background:var(--acc2)}
       <div class="kpis" id="kpis"></div>
       <p class="hint">Programación multianual (tres años) ajustada a la APM: ficha de la actividad (PM1), metas físicas por tarea (PM2) y recursos por partida (PM3). Lo que la propuesta del área no alcanza dentro del techo APM queda como <b>propuesta no priorizada</b>: no se pierde y sirve para la consistencia con el PIA.</p>
       <div id="aoList"></div>
+    </div>
+    <div id="tHist" class="hidden">
+      <div class="panel">
+        <div class="h-top"><div><h2>Historial de cambios</h2><p class="sub" id="hSub"></p></div><button class="btn sec sm" id="bHistX" type="button">Volver</button></div>
+        <div class="h-f">
+          <label>Usuario<select class="inp" id="hU"><option value="">Todos</option></select></label>
+          <label>Desde<input class="inp" type="date" id="hD"></label>
+          <label>Hasta<input class="inp" type="date" id="hH"></label>
+          <label class="q">Buscar<input class="inp" id="hQ" placeholder="Actividad, recurso, dato o valor"></label>
+          <button class="btn sec" id="bHistXls" type="button">Descargar Excel</button>
+        </div>
+        <div id="hList"></div>
+        <div class="acts"><button class="btn sec hidden" id="bHistMas" type="button">Ver más</button><span class="msg" id="hMsg"></span></div>
+      </div>
     </div>
     <div id="tNmp" class="hidden">
       <div class="panel hidden" id="pBandeja">
@@ -330,6 +379,85 @@ $('fLogin').addEventListener('submit', function (ev) {
 $('bOut').onclick = function () { salir(''); };
 $('selCc').onchange = function () { S.cc = this.value; cargar(); };
 $('selPer').onchange = function () { S.per = +this.value; S.anio = {}; cargar(); };
+var HACC = { guardarAO: 'Guardó la programación', enviarNMP: 'Envió una solicitud NMP', resolverNMP: 'Resolvió una NMP', cerrarVersion: 'Cerró una versión', nuevoPeriodo: 'Abrió un nuevo periodo', cambiarClave: 'Cambió su contraseña', restablecerClave: 'Restableció una contraseña', directo: 'Carga directa en la base de datos' };
+var HCOLS = ['Fecha', 'Usuario', 'Acción', 'Origen', 'Centro de costo', 'Actividad', 'Sección', 'Registro', 'Descripción', 'Operación', 'Dato', 'Antes', 'Después'];
+S.hl = []; S.hOpen = {};
+function hFiltros() { return { usuario: $('hU').value, desde: $('hD').value, hasta: $('hH').value, q: $('hQ').value.trim() }; }
+function hNum(v) { return v !== '' && v != null && /^-?\d+(\.\d+)?$/.test(String(v)); }
+function hVal(v, cls) { if (v == null || v === '') return '<span class="' + cls + '">(vacío)</span>'; return '<span class="' + cls + '">' + esc(hNum(v) ? fmt2(v) : v) + '</span>'; }
+function abrirHist() {
+  document.querySelectorAll('nav button').forEach(function (x) { x.classList.remove('on'); });
+  $('tProg').classList.add('hidden'); $('tNmp').classList.add('hidden'); $('tHist').classList.remove('hidden');
+  $('bHist').setAttribute('aria-pressed', 'true'); cargarHist(false);
+}
+function cerrarHist() { document.querySelector('nav button[data-t="prog"]').click(); }
+function cargarHist(mas) {
+  var opp = S.sesion && S.sesion.rol === 'OPP';
+  $('hSub').textContent = 'Quién cambió qué y cuándo en el POI ' + YS[0] + '–' + YS[2] + (opp ? (S.cc ? ', centro de costo ' + S.cc : ', todas las áreas') : ', ' + S.cc) + '. Cada dato muestra su valor anterior y el nuevo. Se registra solo; nadie puede editarlo.';
+  $('hMsg').className = 'msg'; $('hMsg').textContent = 'Cargando…';
+  if (!mas) { S.hl = []; S.hOpen = {}; }
+  api('historial', Object.assign(hFiltros(), { desde_n: String(S.hl.length) })).then(function (j) {
+    if (!j.ok) { $('hMsg').className = 'msg bad'; $('hMsg').textContent = j.error || 'No se pudo cargar el historial.'; return; }
+    $('hMsg').textContent = '';
+    S.hl = S.hl.concat(j.lotes || []);
+    var su = $('hU'), cur = su.value;
+    if (!mas) su.innerHTML = '<option value="">Todos</option>' + (j.usuarios || []).concat(cur && (j.usuarios || []).indexOf(cur) < 0 ? [cur] : []).sort().map(function (u) { return '<option' + (u === cur ? ' selected' : '') + '>' + esc(u) + '</option>'; }).join('');
+    $('bHistMas').classList.toggle('hidden', !j.mas);
+    pintarHist();
+  }).catch(function () { $('hMsg').className = 'msg bad'; $('hMsg').textContent = 'Sin conexión con el servidor.'; });
+}
+function pintarHist() {
+  if (!S.hl.length) { $('hList').innerHTML = '<p class="empty">' + (hFiltros().q || hFiltros().usuario || hFiltros().desde || hFiltros().hasta ? 'Ningún cambio coincide con los filtros.' : 'Aún no hay cambios registrados en este periodo. Aparecerán aquí cuando un área guarde o importe su programación.') + '</p>'; return; }
+  var dia = '', out = '';
+  S.hl.forEach(function (l) {
+    var f = String(l.fecha || ''), d = f.slice(0, 10), hr = f.slice(11);
+    if (d !== dia) { dia = d; out += '<div class="hl-day">' + esc(d) + '</div>'; }
+    var imp = l.accion === 'guardarAO' && l.origen === 'Importado', ev = l.det.length && l.det.every(function (c) { return c.o === 'Evento'; });
+    var kind = imp ? 'k-imp' : /NMP/.test(l.accion) ? 'k-nmp' : (ev && l.accion !== 'guardarAO') ? 'k-sis' : '';
+    var tit = imp ? 'Importó el Excel' : (HACC[l.accion] || l.accion);
+    var ids = (l.aos || []).concat(/NMP/.test(l.accion) ? l.det.filter(function (c) { return c.s === 'NMP' && c.r; }).map(function (c) { return c.r; }).filter(function (v, i, a) { return a.indexOf(v) === i; }) : []);
+    var quien = l.usuario === 'Carga directa' ? 'OPP, carga directa' : (l.nombre ? l.nombre + ' (' + l.usuario + ')' : l.usuario);
+    var res = ev ? esc(l.det[0].d || '') : [l.cambios_n ? l.cambios_n + (l.cambios_n === 1 ? ' dato cambiado' : ' datos cambiados') : '', l.nuevos ? l.nuevos + (l.nuevos === 1 ? ' registro nuevo' : ' registros nuevos') : ''].filter(Boolean).join(' · ');
+    var abierto = !!S.hOpen[l.lote];
+    out += '<div class="hl ' + kind + '"><div class="hl-t"><b>' + esc(hr) + '</b></div><div class="hl-b">' +
+      '<div class="hl-h">' + esc(tit) + (ids.length ? ' · <span class="id">' + esc(ids.slice(0, 3).join(', ')) + (ids.length > 3 ? ' y ' + (ids.length - 3) + ' más' : '') + '</span>' : '') + '</div>' +
+      '<div class="hl-m">' + esc(quien) + ((l.centros || []).length ? ' · ' + esc(l.centros.join(', ')) : '') + '</div>' +
+      '<div class="hl-c"><span class="hint">' + res + '</span>' + (ev ? '' : '<button type="button" data-l="' + l.lote + '" aria-expanded="' + abierto + '">' + (abierto ? 'Ocultar detalle' : 'Ver detalle') + '</button>') + '</div>' +
+      (abierto ? hDet(l) : '') + '</div></div>';
+  });
+  $('hList').innerHTML = out;
+  $('hList').querySelectorAll('.hl-c button').forEach(function (b) { b.onclick = function () { S.hOpen[b.dataset.l] = !S.hOpen[b.dataset.l]; pintarHist(); }; });
+}
+function hDet(l) {
+  var rows = l.det.map(function (c) {
+    var reg = '<td class="r">' + esc(c.d || c.r || '') + '<small>' + esc(c.s || '') + (c.r ? ' · ' + esc(c.r) : '') + '</small></td>';
+    if (c.o === 'Nuevo') return '<tr>' + reg + '<td>Registro nuevo</td><td class="num">—</td><td class="num"><span class="nv">' + esc(c.v || 'Agregado') + '</span></td></tr>';
+    if (c.o === 'Evento') return '<tr>' + reg + '<td colspan="3">' + esc(c.d || '') + '</td></tr>';
+    var n = hNum(c.a) || hNum(c.v);
+    return '<tr>' + reg + '<td>' + esc(c.c || '') + '</td><td' + (n ? ' class="num"' : '') + '>' + hVal(c.a, 'a') + '</td><td' + (n ? ' class="num"' : '') + '>' + hVal(c.v, 'v') + '</td></tr>';
+  }).join('');
+  return '<div class="hl-d"><table><thead><tr><th>Registro</th><th>Dato</th><th>Antes</th><th>Después</th></tr></thead><tbody>' + rows + '</tbody></table>' +
+    (l.n > l.det.length ? '<p class="hint">Se muestran ' + l.det.length + ' de ' + l.n + ' cambios. Descarga el Excel para verlos todos.</p>' : '') + '</div>';
+}
+$('bHist').onclick = function () { if ($('tHist').classList.contains('hidden')) abrirHist(); else cerrarHist(); };
+$('bHistX').onclick = cerrarHist;
+$('bHistMas').onclick = function () { cargarHist(true); };
+['hU', 'hD', 'hH'].forEach(function (id) { $(id).onchange = function () { cargarHist(false); }; });
+(function () { var t; $('hQ').oninput = function () { clearTimeout(t); t = setTimeout(function () { cargarHist(false); }, 400); }; })();
+$('bHistXls').onclick = function () {
+  var b = this; b.disabled = true; $('hMsg').className = 'msg'; $('hMsg').textContent = 'Preparando Excel…';
+  api('historial', Object.assign(hFiltros(), { todo: true })).then(function (j) {
+    if (!j.ok) { b.disabled = false; $('hMsg').className = 'msg bad'; $('hMsg').textContent = j.error || 'No se pudo descargar.'; return; }
+    cargarXlsx(function () {
+      j.filas.forEach(function (r) { r['Acción'] = r['Origen'] === 'Importado' && r['Acción'] === 'guardarAO' ? 'Importó el Excel' : (HACC[r['Acción']] || r['Acción']); });
+      var wb = XLSX.utils.book_new(), ws = XLSX.utils.json_to_sheet(j.filas, { header: HCOLS });
+      ws['!cols'] = [18, 16, 16, 10, 12, 12, 14, 18, 40, 10, 22, 30, 30].map(function (w) { return { wch: w }; });
+      XLSX.utils.book_append_sheet(wb, ws, 'Historial');
+      XLSX.writeFile(wb, 'Historial_POI_' + YS[0] + '-' + YS[2] + (S.cc ? '_' + S.cc : '') + '.xlsx');
+      b.disabled = false; $('hMsg').textContent = j.filas.length >= 20000 ? 'Se descargaron los 20 000 cambios más recientes. Usa las fechas para acotar.' : '';
+    });
+  }).catch(function () { b.disabled = false; });
+};
 function soloLectura() {
   var ro = S.periodo && S.periodo.estado === 'CERRADO', bn = $('roBan');
   if (!bn) { bn = document.createElement('div'); bn.id = 'roBan'; bn.className = 'panel'; bn.style.cssText = 'background:var(--warnbg);border-color:var(--warn);color:var(--warn);font-weight:500'; $('app').querySelector('main').insertBefore(bn, $('app').querySelector('main').firstChild); }
@@ -341,6 +469,7 @@ document.querySelectorAll('nav button').forEach(function (b) {
   b.onclick = function () {
     document.querySelectorAll('nav button').forEach(function (x) { x.classList.toggle('on', x === b); });
     $('tProg').classList.toggle('hidden', b.dataset.t !== 'prog'); $('tNmp').classList.toggle('hidden', b.dataset.t !== 'nmp');
+    $('tHist').classList.add('hidden'); $('bHist').setAttribute('aria-pressed', 'false');
   };
 });
 
@@ -366,6 +495,7 @@ function cargar() {
     }
     $('bExp').classList.toggle('hidden', j.sesion.rol !== 'OPP');
     pintarProg(); pintarNmp(); pintarBandeja(); soloLectura();
+    if (!$('tHist').classList.contains('hidden')) cargarHist(false);
   }).catch(function () { loading(false); });
 }
 
