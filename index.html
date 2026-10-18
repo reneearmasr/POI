@@ -232,6 +232,45 @@ table.pnl tbody tr:hover td{background:var(--acc2)}
 .hl-d .num{font-variant-numeric:tabular-nums;white-space:nowrap}
 .hl-day{font-family:'IBM Plex Sans Condensed','IBM Plex Sans',sans-serif;font-size:13px;font-weight:600;color:var(--ink2);margin:14px 0 2px 110px}
 @media (max-width:760px){.h-f{grid-template-columns:1fr 1fr}.h-f .q,.h-f button{grid-column:1/-1}.hl{grid-template-columns:1fr}.hl-t{text-align:left;padding:10px 0 0 23px}.hl-t b{display:inline;margin-right:6px}.hl-day{margin-left:0}.hl-d{overflow-x:auto}}
+/* CMN y guía CEPLAN */
+.chip.neu{background:#EEF1F5;color:var(--mut)}
+.ubi3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.red-ao{color:var(--warn);margin:6px 0 0}
+.red-ao:empty{display:none}
+.etp{list-style:none;margin:14px 0 0;padding:0;display:grid;grid-template-columns:repeat(6,1fr);counter-reset:e}
+.etp li{position:relative;padding:30px 12px 0 0;counter-increment:e}
+.etp li::before{content:counter(e);position:absolute;top:0;left:0;width:22px;height:22px;border-radius:50%;background:#fff;border:2px solid var(--line);color:var(--mut);font:600 12px/18px 'IBM Plex Sans Condensed','IBM Plex Sans',sans-serif;text-align:center;z-index:1}
+.etp li::after{content:"";position:absolute;top:10px;left:22px;right:0;height:2px;background:var(--line)}
+.etp li:last-child::after{display:none}
+.etp li.hecho::before{background:var(--acc);border-color:var(--acc);color:#fff}
+.etp li.hecho::after{background:var(--acc)}
+.etp li.hoy::before{background:var(--ink);border-color:var(--ink);color:#fff;box-shadow:0 0 0 4px rgba(10,126,164,.18)}
+.etp b{display:block;font-size:13px;color:var(--ink);line-height:1.3}
+.etp li.hoy b{color:var(--acc)}
+.etp .f{display:block;font-size:12px;color:var(--ink2);margin-top:3px;font-variant-numeric:tabular-nums}
+.etp .x{display:block;font-size:12px;color:var(--mut);margin-top:4px;line-height:1.4}
+.circ{list-style:none;margin:14px 0 0;padding:0;display:flex;gap:0;flex-wrap:wrap}
+.circ li{flex:1 1 160px;border:1px solid var(--line);border-left-width:4px;border-left-color:var(--acc);padding:8px 12px;margin:0 8px 8px 0;background:#fff;border-radius:6px}
+.circ li:nth-child(2){border-left-color:var(--amb)}
+.circ b{display:block;font-size:13px;color:var(--ink)}
+.circ span{font-size:12px;color:var(--mut)}
+.cmn-k{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0 14px}
+.cmn-k div{border:1px solid var(--line);border-radius:8px;padding:8px 12px;background:#fff}
+.cmn-k span{display:block;font-size:12px;color:var(--mut)}
+.cmn-k b{font-size:18px;color:var(--ink);font-family:'IBM Plex Sans Condensed','IBM Plex Sans',sans-serif}
+.cmn-k b.dn{color:var(--warn)}
+.cmn-t tr.grp td{background:#F6F8FA;font-weight:500;color:var(--ink)}
+.cmn-t tr[data-cc]{cursor:pointer}
+.cmn-t tr[data-cc]:hover td{background:var(--acc2)}
+.rep{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px}
+.rep>div{border:1px solid var(--line);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.rep b{color:var(--ink);font-size:14px}
+.rep span{font-size:13px;color:var(--mut)}
+.cmn-f{grid-template-columns:minmax(200px,2fr) minmax(140px,1fr) minmax(120px,1fr)}
+.ver-f{align-items:center;gap:8px;flex-wrap:wrap}
+.ver-f label{margin:0;font-size:13px;color:var(--mut)}
+.ver-f select{width:auto;min-width:240px}
+@media (max-width:900px){.etp{grid-template-columns:1fr;gap:4px}.etp li{padding:0 0 10px 34px}.etp li::after{top:24px;bottom:0;left:10px;right:auto;width:2px;height:auto}.cmn-k{grid-template-columns:1fr 1fr}.rep{grid-template-columns:1fr}.ubi3{grid-template-columns:1fr}.cmn-f{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -264,6 +303,7 @@ table.pnl tbody tr:hover td{background:var(--acc2)}
   <nav>
     <button data-t="prog" class="on">Programación POI (PM1 / PM2 / PM3)</button>
     <button data-t="nmp">Modificaciones (NMP)</button>
+    <button data-t="cmn">Cuadro de Necesidades (CMN)</button>
   </nav>
   <main>
     <div id="tProg">
@@ -285,6 +325,7 @@ table.pnl tbody tr:hover td{background:var(--acc2)}
         <div class="acts"><button class="btn sec hidden" id="bHistMas" type="button">Ver más</button><span class="msg" id="hMsg"></span></div>
       </div>
     </div>
+    <div id="tCmn" class="hidden"><div id="cmnBox"></div></div>
     <div id="tNmp" class="hidden">
       <div class="panel hidden" id="pBandeja">
         <h2>Bandeja OPP · solicitudes por revisar</h2>
@@ -387,7 +428,7 @@ function hNum(v) { return v !== '' && v != null && /^-?\d+(\.\d+)?$/.test(String
 function hVal(v, cls) { if (v == null || v === '') return '<span class="' + cls + '">(vacío)</span>'; return '<span class="' + cls + '">' + esc(hNum(v) ? fmt2(v) : v) + '</span>'; }
 function abrirHist() {
   document.querySelectorAll('nav button').forEach(function (x) { x.classList.remove('on'); });
-  $('tProg').classList.add('hidden'); $('tNmp').classList.add('hidden'); $('tHist').classList.remove('hidden');
+  $('tProg').classList.add('hidden'); $('tNmp').classList.add('hidden'); $('tCmn').classList.add('hidden'); $('tHist').classList.remove('hidden');
   $('bHist').setAttribute('aria-pressed', 'true'); cargarHist(false);
 }
 function cerrarHist() { document.querySelector('nav button[data-t="prog"]').click(); }
@@ -458,17 +499,269 @@ $('bHistXls').onclick = function () {
     });
   }).catch(function () { b.disabled = false; });
 };
+// ---------- Guía CEPLAN: etapas del POI, redacción de la AO ----------
+var ETAPAS_VER = ['POI Multianual aprobado', 'Proyecto de ley', 'POI Anual consistente con el PIA', 'POI Anual actualizado'];
+function etapasPoi() {
+  var p = +YS[0] - 1, y0 = +YS[0];
+  return [
+    { t: 'Elaboración del POI Multianual', f: 'Ene – abr ' + p, d: new Date(p, 0, 1), h: new Date(p, 3, 30), x: 'Las áreas programan actividades, metas físicas y costeo.' },
+    { t: 'POI Multianual aprobado', f: 'Hasta 30 abr ' + p, d: new Date(p, 3, 30), h: new Date(p, 3, 30), x: 'Lo aprueba el Titular en el aplicativo CEPLAN.', ver: 'POI Multianual aprobado' },
+    { t: 'Ajustes, CMN y priorización', f: 'May – nov ' + p, d: new Date(p, 4, 1), h: new Date(p, 10, 29), x: 'Cuadro Multianual de Necesidades (identificación), techo APM y proyecto de ley.', ver: 'Proyecto de ley' },
+    { t: 'Ley de Presupuesto', f: 'Hasta 30 nov ' + p, d: new Date(p, 10, 30), h: new Date(p, 10, 30), x: 'El Congreso aprueba el presupuesto ' + y0 + '.' },
+    { t: 'POI Anual consistente con el PIA', f: 'Dic ' + p, d: new Date(p, 11, 1), h: new Date(p, 11, 31), x: 'Planeamiento y áreas ajustan ' + y0 + ' al PIA; lo no financiado queda como POI no financiado.', ver: 'POI Anual consistente con el PIA' },
+    { t: 'Ejecución y seguimiento', f: 'Ene – dic ' + y0, d: new Date(y0, 0, 1), h: new Date(y0, 11, 31), x: 'Hasta 4 actualizaciones del POI Anual (una por trimestre).', ver: 'POI Anual actualizado' }
+  ];
+}
+function etapaHoy() {
+  var hoy = new Date(), et = etapasPoi(), i = et.findIndex(function (e) { return hoy <= new Date(e.h.getFullYear(), e.h.getMonth(), e.h.getDate(), 23, 59); });
+  if (i < 0) i = et.length - 1;
+  var e = et[i]; return { i: i, ver: e.ver || (i < 2 ? 'POI Multianual aprobado' : i < 4 ? 'Proyecto de ley' : 'POI Anual consistente con el PIA') };
+}
+function etapasHtml() {
+  var et = etapasPoi(), k = etapaHoy().i;
+  return '<div class="panel etp-p"><h2>Calendario del POI ' + YS[0] + '–' + YS[2] + '</h2><p class="sub">Etapas según la Guía para el Planeamiento Institucional del CEPLAN (figura 11) y el ciclo de presupuesto. La etapa marcada es la de hoy.</p><ol class="etp">' +
+    et.map(function (e, i) { return '<li class="' + (i < k ? 'hecho' : i === k ? 'hoy' : '') + '"' + (i === k ? ' aria-current="step"' : '') + '><b>' + esc(e.t) + '</b><span class="f">' + esc(e.f) + '</span><span class="x">' + esc(e.x) + '</span></li>'; }).join('') + '</ol></div>';
+}
+function nombreVer(et) {
+  if (et === 'POI Multianual aprobado') return 'POI Multianual ' + YS[0] + '–' + YS[2] + ' aprobado';
+  if (et === 'Proyecto de ley') return 'Proyecto de Ley ' + YS[0];
+  if (et === 'POI Anual consistente con el PIA') return 'POI Anual ' + YS[0] + ' consistente con el PIA';
+  var n = (S.data.versiones || []).filter(function (v) { return v.etapa === 'POI Anual actualizado'; }).length + 1;
+  return 'POI Anual ' + YS[0] + ' actualizado versión ' + n;
+}
+function redAo(nombre) {
+  var w = norm(nombre).split(' ')[0] || '';
+  if (!w) return '';
+  if (/(cion|sion)$/.test(w)) return '';
+  return 'Revisa la redacción: la guía CEPLAN pide <b>sustantivo derivado de verbo + objeto directo</b> (por ejemplo «Supervisión de…», «Atención de…», «Elaboración de…»). La primera palabra es «' + esc(String(nombre).trim().split(/\s+/)[0]) + '».';
+}
+function chipCmn(r) {
+  if (r.cmn === 'ok') return '<span class="chip ok" title="CMN cargado el ' + esc(r.cmn_fecha || '') + '">Cuadra</span>';
+  if (r.cmn === 'dif') return '<span class="chip warn" title="CMN cargado el ' + esc(r.cmn_fecha || '') + '">Difiere' + (r.cmn_difs ? ' (' + r.cmn_difs + ' AO)' : '') + '</span>';
+  return '<span class="chip neu">Sin CMN</span>';
+}
+
+// ---------- Cuadro Multianual de Necesidades ----------
+var CMN_COLS = ['Año', 'Centro de costo', 'Meta', 'Actividad operativa', 'FF', 'Rubro', 'Clasificador', 'Código ítem', 'Descripción', 'Unidad', 'Tipo', 'Cantidad', 'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Set', 'Oct', 'Nov', 'Dic', 'Total', 'Estado POI'];
+S.cmnY = null; S.cmnUp = null;
+function ck(c) { return String(c || '').replace(/\D/g, ''); }
+function estCmn(f, cargado) {
+  var tot = r2(+f.prio + +f.nopri), c = +f.cmn;
+  if (!cargado) return ['neu', 'Sin CMN', 0];
+  if (Math.abs(c - tot) <= 1) return ['ok', 'Cuadra con la propuesta', r2(c - tot)];
+  if (Math.abs(c - +f.prio) <= 1) return ['ok', 'Cuadra con lo priorizado', r2(c - +f.prio)];
+  if (!tot) return ['warn', 'Solo en el CMN', c];
+  if (!c) return ['warn', 'Falta en el CMN', -tot];
+  return ['warn', 'Difiere', r2(c - tot)];
+}
+function pintarCmn() {
+  var opp = S.sesion && S.sesion.rol === 'OPP';
+  $('cmnBox').innerHTML = '<p class="empty">Cargando el Cuadro de Necesidades…</p>';
+  api('cmn').then(function (j) {
+    if (!j.ok) { $('cmnBox').innerHTML = '<p class="empty">' + esc(j.error || 'No se pudo cargar.') + '</p>'; return; }
+    var intro = '<div class="panel"><h2>Cuadro Multianual de Necesidades (CMN)</h2><p class="sub">El POI Multianual es insumo del CMN (fase de identificación) y el costeo de cada actividad sale de valorizar sus bienes y servicios (Guía CEPLAN, tabla 9). Aquí se compara la PM3 con el CMN del SIGA por actividad (meta), clasificador y año. Solo entran bienes y servicios (2.3) y activos (2.6); personal (2.1), pensiones (2.2) y CAS se costean aparte.</p>' +
+      '<ol class="circ"><li><b>POI Multianual</b><span>Actividades, metas y costeo (PM1–PM3)</span></li><li><b>CMN · identificación</b><span>Ítems SIGA de cada recurso</span></li><li><b>Programación de presupuesto</b><span>Techo APM y proyecto de ley</span></li><li><b>PIA y POI Anual</b><span>Consistencia y PAC</span></li></ol></div>';
+    var html = intro + (opp && !S.cc ? cmnResumen(j) : cmnCentro(j)) + cmnReportes() + (opp ? cmnCarga() : '');
+    $('cmnBox').innerHTML = html;
+    enlazarCmn(j);
+  }).catch(function () { $('cmnBox').innerHTML = '<p class="empty">Sin conexión con el servidor.</p>'; });
+}
+function cmnResumen(j) {
+  var rs = j.resumen || [], car = rs.filter(function (r) { return r.cargado; }).length;
+  return '<div class="panel"><h2>Cuadre por centro de costo · ' + YS[0] + '</h2><p class="sub">' + car + ' de ' + rs.length + ' centros de costo tienen CMN del SIGA cargado. Costeo POI = bienes, servicios y activos de la PM3 (priorizado + no priorizado). Haz clic en una fila para ver el detalle.</p>' +
+    '<div class="tw"><table class="pnl cmn-t"><thead><tr><th class="l">Centro de costo</th><th>Costeo POI ' + YS[0] + ' (S/)</th><th>Priorizado (S/)</th><th>CMN SIGA (S/)</th><th>Diferencia (S/)</th><th>AO que difieren</th><th>Metas sin vincular</th><th>CMN cargado</th></tr></thead><tbody>' +
+    rs.map(function (r) { var d = r2(+r.cmn - +r.poi); return '<tr data-cc="' + esc(r.cc) + '"><td class="l"><b>' + esc(r.cc) + '</b></td><td class="num">' + (+r.poi ? fmt(r.poi) : '—') + '</td><td class="num">' + (+r.prio ? fmt(r.prio) : '—') + '</td><td class="num">' + (r.cargado ? fmt(r.cmn) : '—') + '</td><td class="num ' + (!r.cargado ? '' : Math.abs(d) <= 1 ? 'd0' : 'dn') + '">' + (r.cargado ? fmt2(d) : '—') + '</td><td class="num">' + (r.cargado ? r.difs : '—') + '</td><td class="num">' + (r.cargado ? r.sin_vinculo : '—') + '</td><td>' + (r.cargado ? '<span class="chip ' + (r.difs || r.sin_vinculo ? 'warn' : 'ok') + '">' + esc(r.fecha) + '</span>' : '<span class="chip neu">Sin CMN</span>') + '</td></tr>'; }).join('') +
+    '</tbody></table></div></div>';
+}
+function cmnCentro(j) {
+  var yrs = (j.anios || []).map(String), Y = S.cmnY && YS.indexOf(S.cmnY) >= 0 ? S.cmnY : YS[0]; S.cmnY = Y;
+  var fs = (j.filas || []).filter(function (f) { return String(f.anio) === Y; }), car = yrs.indexOf(Y) >= 0;
+  var aos = {}; (S.data.aos || []).forEach(function (a) { aos[a.id_ao] = a; });
+  var grupos = {}; fs.forEach(function (f) { var k = f.id_ao || ('meta ' + f.meta); (grupos[k] = grupos[k] || []).push(f); });
+  var T = { p: 0, n: 0, c: 0, d: 0, x: 0 }; fs.forEach(function (f) { var e = estCmn(f, car); T.p += +f.prio; T.n += +f.nopri; T.c += +f.cmn; T.d += Math.abs(e[2]); if (e[0] === 'warn') T.x++; });
+  var cab = '<div class="panel"><h2>Cuadre POI – CMN · ' + esc(S.cc || (S.sesion && S.sesion.cc) || '') + '</h2><p class="sub">' +
+    (yrs.length ? 'CMN del SIGA cargado para ' + yrs.join(', ') + '. El cuadre acepta el CMN igual a la propuesta del área (priorizado + no priorizado) o solo a lo priorizado, con tolerancia de S/ 1.' : 'Aún no se ha cargado el CMN del SIGA para este centro de costo. Mientras tanto se muestra el costeo del POI que irá al CMN. Registra el código de ítem SIGA de cada recurso en la PM3 para facilitar el cruce.') + '</p>' +
+    '<div class="yrs" role="tablist">' + YS.map(function (y) { return '<button type="button" data-cy="' + y + '" class="' + (y === Y ? 'on' : '') + '">' + y + (yrs.indexOf(y) >= 0 ? ' ✓' : '') + '</button>'; }).join('') + '</div>' +
+    '<div class="cmn-k"><div><span>Costeo POI ' + Y + '</span><b class="num">S/ ' + fmt(T.p + T.n) + '</b></div><div><span>Priorizado</span><b class="num">S/ ' + fmt(T.p) + '</b></div><div><span>CMN SIGA</span><b class="num">' + (car ? 'S/ ' + fmt(T.c) : '—') + '</b></div><div><span>Por cuadrar</span><b class="num ' + (!car ? '' : T.x ? 'dn' : 'd0') + '">' + (!car ? '—' : T.x ? T.x + (T.x === 1 ? ' partida' : ' partidas') + ' · S/ ' + fmt(T.d) : 'Todo cuadra') + '</b></div></div>';
+  if (!fs.length) return cab + '<p class="empty">No hay bienes, servicios ni activos programados para ' + Y + '.</p></div>';
+  return cab + '<div class="tw"><table class="cmn-t"><thead><tr><th class="l">Clasificador</th><th>Priorizado (S/)</th><th>No priorizado (S/)</th><th>Costeo POI (S/)</th><th>CMN SIGA (S/)</th><th>Diferencia (S/)</th><th>Estado</th></tr></thead><tbody>' +
+    Object.keys(grupos).map(function (k) {
+      var a = aos[k], tit = a ? '<b>' + esc(k) + '</b> · ' + esc(a.nombre_ao || a.finalidad) + ' <span class="hint">meta ' + esc(grupos[k][0].meta || '') + '</span>' : '<b>Meta ' + esc(grupos[k][0].meta || '?') + ' del CMN</b> <span class="hint">no coincide con ninguna actividad (sec_func) de este centro de costo</span>';
+      return '<tr class="grp"><td class="l" colspan="7">' + tit + '</td></tr>' + grupos[k].map(function (f) {
+        var e = estCmn(f, car), tot = r2(+f.prio + +f.nopri), d = e[2];
+        return '<tr><td class="l mono">' + esc(f.clasificador) + (f.desc ? ' <span class="hint">' + esc(f.desc) + '</span>' : '') + '</td><td class="num">' + fmt2(f.prio) + '</td><td class="num">' + fmt2(f.nopri) + '</td><td class="num"><b>' + fmt2(tot) + '</b></td><td class="num">' + (car ? fmt2(f.cmn) + (f.items ? ' <span class="hint">(' + f.items + ' ítems)</span>' : '') : '—') + '</td><td class="num ' + (car ? (e[0] === 'ok' ? 'd0' : 'dn') : '') + '">' + (car ? fmt2(d) : '—') + '</td><td><span class="chip ' + e[0] + '">' + e[1] + '</span></td></tr>';
+      }).join('');
+    }).join('') + '</tbody></table></div></div>';
+}
+function cmnReportes() {
+  var amb = S.cc ? 'del centro de costo ' + esc(S.cc) : 'de todas las áreas';
+  return '<div class="panel"><h2>Reportes</h2><p class="sub">Formatos de la guía CEPLAN y del circuito con Abastecimiento, ' + amb + '.</p><div class="rep">' +
+    '<div><b>Anexo B-4 · POI Multianual con programación física y de costeo</b><span>Por OEI y AEI: cada actividad con ubigeo, unidad de medida, prioridad, meta física y costeo mensual de los tres años.</span><button class="btn sec sm" type="button" id="bB4">Descargar Anexo B-4</button></div>' +
+    '<div><b>CMN del POI (plantilla)</b><span>Bienes y servicios de la PM3 con código de ítem, para que Abastecimiento los registre en el SIGA. Es el mismo formato que se puede volver a cargar.</span><button class="btn sec sm" type="button" id="bCmnPoi">Descargar CMN del POI</button></div>' +
+    '</div><span class="msg" id="repMsg"></span></div>';
+}
+function cmnCarga() {
+  var cs = (S.data.centros || []).map(function (c) { return '<option' + (c === S.cc ? ' selected' : '') + '>' + esc(c) + '</option>'; }).join('');
+  return '<div class="panel"><h2>Cargar CMN del SIGA</h2><p class="sub">Acepta el reporte del SIGA «Cuadro de necesidades de bienes y servicios mensualizado» (fase identificación) exportado a Excel, o la plantilla «CMN del POI». Al cargar un centro de costo y año, reemplaza el CMN anterior de ese centro de costo y año (queda en el historial).</p>' +
+    '<div class="h-f cmn-f"><label>Archivo<input class="inp" type="file" id="fCmn" accept=".xlsx,.xls,.csv"></label><label>Centro de costo<select class="inp" id="cmnCc"><option value="">Según el archivo</option>' + cs + '</select></label><label>Año<select class="inp" id="cmnAn"><option value="">Según el archivo</option>' + YS.map(function (y) { return '<option>' + y + '</option>'; }).join('') + '</select></label></div>' +
+    '<div id="cmnPrev"></div><div class="acts"><button class="btn hidden" type="button" id="bCmnUp">Cargar al portal</button><span class="msg" id="cmnMsg"></span></div></div>';
+}
+function enlazarCmn(j) {
+  $('cmnBox').querySelectorAll('[data-cy]').forEach(function (b) { b.onclick = function () { S.cmnY = b.dataset.cy; $('cmnBox').querySelector('.panel:nth-child(2)').outerHTML = cmnCentro(j); enlazarCmn(j); }; });
+  $('cmnBox').querySelectorAll('.cmn-t tr[data-cc]').forEach(function (tr) { tr.onclick = function () { S.cc = tr.dataset.cc; cargar(); }; });
+  if ($('bB4')) $('bB4').onclick = descargarB4;
+  if ($('bCmnPoi')) $('bCmnPoi').onclick = descargarCmnPoi;
+  if ($('fCmn')) {
+    var rel = function () { var f = $('fCmn').files[0]; if (f) leerCmn(f); };
+    $('fCmn').onchange = rel; $('cmnCc').onchange = rel; $('cmnAn').onchange = rel;
+    $('bCmnUp').onclick = subirCmn;
+  }
+}
+function leerCmn(file) {
+  $('cmnMsg').className = 'msg'; $('cmnMsg').textContent = 'Leyendo ' + file.name + '…'; $('bCmnUp').classList.add('hidden'); $('cmnPrev').innerHTML = '';
+  cargarXlsx(function () {
+    var fr = new FileReader();
+    fr.onload = function () {
+      try {
+        var wb = XLSX.read(fr.result, { type: 'array' }), out = null;
+        for (var i = 0; i < wb.SheetNames.length && !(out && out.filas.length); i++) {
+          var ws = wb.Sheets[wb.SheetNames[i]], rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: '', blankrows: false });
+          out = cmnPlantilla(rows) || cmnSiga(rows);
+        }
+        if (!out || !out.filas.length) { $('cmnMsg').className = 'msg bad'; $('cmnMsg').textContent = 'No se encontraron ítems del CMN en el archivo (se busca la columna Clasificador con los meses, o el reporte mensualizado del SIGA).'; return; }
+        var cc = $('cmnCc').value, an = $('cmnAn').value, faltan = [];
+        out.filas.forEach(function (f) { if (cc) f.cc = cc; if (an) f.anio = an; f.cc = String(f.cc || '').toUpperCase(); });
+        if (out.filas.some(function (f) { return !f.cc; })) faltan.push('elige el centro de costo del archivo');
+        if (out.filas.some(function (f) { return YS.indexOf(String(f.anio)) < 0; })) faltan.push('elige el año (el archivo no lo indica o está fuera de ' + YS[0] + '–' + YS[2] + ')');
+        S.cmnUp = { archivo: file.name, formato: out.formato, filas: out.filas };
+        var g = {}; out.filas.forEach(function (f) { var k = f.cc + ' · ' + f.anio; g[k] = g[k] || { n: 0, t: 0, sm: 0 }; g[k].n++; g[k].t += +f.total || 0; if (!f.meta) g[k].sm++; });
+        var desc = (S.data.centros || []);
+        $('cmnPrev').innerHTML = '<p class="hint">Formato detectado: <b>' + esc(out.formato) + '</b> · ' + out.filas.length + ' ítems.</p><div class="tw"><table class="cmn-t"><thead><tr><th class="l">Centro de costo · año</th><th>Ítems</th><th>Total (S/)</th><th>Ítems sin meta</th><th></th></tr></thead><tbody>' +
+          Object.keys(g).map(function (k) { var cc0 = k.split(' · ')[0], ok = !desc.length || desc.indexOf(cc0) >= 0; return '<tr><td class="l">' + esc(k) + '</td><td class="num">' + g[k].n + '</td><td class="num">' + fmt2(g[k].t) + '</td><td class="num">' + g[k].sm + '</td><td>' + (ok ? '' : '<span class="chip warn">No existe en el POI</span>') + '</td></tr>'; }).join('') + '</tbody></table></div>';
+        if (faltan.length) { $('cmnMsg').className = 'msg bad'; $('cmnMsg').textContent = 'Para cargar: ' + faltan.join('; ') + '.'; return; }
+        $('cmnMsg').textContent = ''; $('bCmnUp').classList.remove('hidden');
+      } catch (e) { $('cmnMsg').className = 'msg bad'; $('cmnMsg').textContent = 'No se pudo leer el archivo: ' + e.message; }
+    };
+    fr.readAsArrayBuffer(file);
+  });
+}
+function cmnPlantilla(rows) {
+  var h = -1;
+  for (var i = 0; i < Math.min(rows.length, 30); i++) { var ns = rows[i].map(norm); if (ns.indexOf('clasificador') >= 0 && ns.indexOf('ene') >= 0) { h = i; break; } }
+  if (h < 0) return null;
+  var H = rows[h].map(norm), col = function () { for (var a = 0; a < arguments.length; a++) { var k = H.indexOf(arguments[a]); if (k >= 0) return k; } return -1; };
+  var c = { an: col('ano', 'año', 'anio'), cc: col('centro de costo', 'cc'), meta: col('meta', 'sec_func', 'sec func'), ff: col('ff', 'fuente', 'fuente de financiamiento'), ru: col('rubro'),
+            cl: col('clasificador'), it: col('codigo item', 'codigo de item', 'item', 'codigo'), de: col('descripcion', 'descripcion item', 'item / descripcion'), un: col('unidad', 'unidad de medida'),
+            ti: col('tipo'), ca: col('cantidad', 'cant'), to: col('total', 'valor total anual'), m0: H.indexOf('ene') };
+  var filas = [];
+  for (var r = h + 1; r < rows.length; r++) {
+    var R = rows[r], cl = String(R[c.cl] == null ? '' : R[c.cl]).trim();
+    if (!/^2/.test(ck(cl)) || ck(cl).length < 4) continue;
+    var m = []; for (var k = 0; k < 12; k++) { var v = pn(R[c.m0 + k]); m.push(isNaN(v) ? 0 : v); }
+    var to = c.to >= 0 ? pn(R[c.to]) : NaN;
+    filas.push({ anio: c.an >= 0 ? String(R[c.an]).trim() : '', cc: c.cc >= 0 ? String(R[c.cc]).trim() : '', meta: c.meta >= 0 ? String(R[c.meta]).trim() : '',
+                 ff: c.ff >= 0 ? String(R[c.ff]).trim() : '', rubro: c.ru >= 0 ? String(R[c.ru]).trim() : '', clasificador: cl,
+                 item: c.it >= 0 ? String(R[c.it]).trim() : '', desc: c.de >= 0 ? String(R[c.de]).trim() : '', unidad: c.un >= 0 ? String(R[c.un]).trim() : '',
+                 tipo: c.ti >= 0 ? String(R[c.ti]).trim() : '', cant: c.ca >= 0 ? String(R[c.ca]).trim() : '', m: m, total: isNaN(to) ? r2(m.reduce(function (a, b) { return a + b; }, 0)) : to });
+  }
+  return { formato: 'Plantilla CMN', filas: filas };
+}
+function cmnSiga(rows) {
+  var ctx = { anio: '', meta: '', ff: '', rubro: '', cl: '', cd: '' }, desc = [], filas = [];
+  rows.forEach(function (row) {
+    var cells = row.map(function (x) { return String(x == null ? '' : x).trim(); }), txt = cells.filter(Boolean);
+    if (!txt.length) return;
+    var line = txt.join(' ');
+    var mA = line.match(/\bA[ñn]o\b[^0-9]{0,6}(20\d\d)/i); if (mA && !ctx.anio) ctx.anio = mA[1];
+    if (/^\(?\s*soles\s*\)?$/i.test(txt[0]) || /^20\d\d$/.test(txt[0]) && txt.length === 1) { if (/^20\d\d$/.test(txt[0]) && !ctx.anio) ctx.anio = txt[0]; return; }
+    if (/^(RECURSOS|DONACIONES)/i.test(txt[0])) { ctx.ff = txt[0]; var fr = line.match(/\b(\d)-(\d\d)\b/); if (fr) { ctx.ff = fr[1] + '-' + txt[0]; ctx.rubro = fr[2]; } return; }
+    var iI = cells.findIndex(function (c) { return /^\d{12}$/.test(c); });
+    if (iI >= 0 && ctx.cl) {
+      var rest = cells.slice(iI + 1), tipo = (rest.find(function (c) { return /^(BIEN|SERVICIO|OBRA)/i.test(c); }) || '').toUpperCase();
+      var nums = rest.filter(function (c) { return c !== '' && !isNaN(pn(c)); }).map(pn);
+      var m = nums.slice(0, 12); while (m.length < 12) m.push(0);
+      var antes = cells.slice(0, iI).filter(function (c) { return c && isNaN(pn(c)); }).join(' ');
+      filas.push({ anio: ctx.anio, cc: '', meta: ctx.meta, ff: ctx.ff, rubro: ctx.rubro, clasificador: ctx.cl, clasificador_desc: ctx.cd, item: cells[iI],
+                   desc: (antes || desc.slice(-3).join(' ')).trim(), unidad: tipo, tipo: tipo.replace(/S$/, ''), cant: '', m: m,
+                   total: nums.length > 12 ? nums[12] : r2(m.reduce(function (a, b) { return a + b; }, 0)) });
+      desc = []; return;
+    }
+    var mK = txt[0].match(/^(2\s*\.\s*\d[\d\s.]*\d)\s*(.*)$/);
+    if (mK && ck(mK[1]).length >= 4) { ctx.cl = mK[1].trim().replace(/[.\s]+/g, '.'); ctx.cd = (mK[2] || (txt[1] && isNaN(pn(txt[1])) ? txt[1] : '')).trim(); desc = []; return; }
+    var mM = txt[0].match(/^(\d{4})(?:\s+(\D.*))?$/);
+    if (mM && +mM[1] < 1900 && (mM[2] || (txt[1] && isNaN(pn(txt[1]))))) { ctx.meta = mM[1]; ctx.cl = ''; desc = []; return; }
+    if (/^(actividad|proyecto)\b|^c\d{3,}\s*:|^item|^f\.f|^rubro|^clasificador|^unidad|^centro de costo|^sistema integrado|^modulo|^cuadro de necesidades|^fase/i.test(norm(txt[0]))) { desc = []; return; }
+    if (txt.every(function (c) { return isNaN(pn(c)); })) desc.push(line);
+  });
+  return { formato: 'Reporte SIGA mensualizado', filas: filas };
+}
+function subirCmn() {
+  if (!S.cmnUp) return;
+  var b = $('bCmnUp'); b.disabled = true; $('cmnMsg').className = 'msg'; $('cmnMsg').textContent = 'Cargando ' + S.cmnUp.filas.length + ' ítems…';
+  api('cargarCMN', S.cmnUp).then(function (j) {
+    b.disabled = false;
+    if (!j.ok) { $('cmnMsg').className = 'msg bad'; $('cmnMsg').textContent = j.error || 'No se pudo cargar.'; return; }
+    S.cmnUp = null;
+    alert('CMN cargado: ' + j.items + ' ítems, S/ ' + fmt2(j.total) + '.' + (j.omitidos && j.omitidos.length ? '\nSe omitieron centros de costo que no existen en el POI: ' + j.omitidos.join(', ') + '.' : ''));
+    cargar();
+  }).catch(function () { b.disabled = false; });
+}
+function descargarCmnPoi() {
+  $('repMsg').className = 'msg'; $('repMsg').textContent = 'Preparando CMN del POI…';
+  api('cmnPOI').then(function (j) {
+    if (!j.ok) { $('repMsg').className = 'msg bad'; $('repMsg').textContent = j.error || 'No se pudo generar.'; return; }
+    cargarXlsx(function () {
+      var wb = XLSX.utils.book_new(), ws = XLSX.utils.json_to_sheet(j.filas, { header: CMN_COLS });
+      ws['!cols'] = CMN_COLS.map(function (c) { return { wch: c === 'Descripción' ? 40 : c.length < 5 ? 9 : 14 }; });
+      XLSX.utils.book_append_sheet(wb, ws, 'CMN del POI');
+      XLSX.writeFile(wb, 'CMN_POI_' + YS[0] + '-' + YS[2] + (S.cc ? '_' + S.cc : '') + '.xlsx');
+      $('repMsg').textContent = j.filas.length ? '' : 'No hay bienes ni servicios programados.';
+    });
+  });
+}
+function descargarB4() {
+  $('repMsg').className = 'msg'; $('repMsg').textContent = 'Preparando Anexo B-4…';
+  api('anexoB4').then(function (j) {
+    if (!j.ok) { $('repMsg').className = 'msg bad'; $('repMsg').textContent = j.error || 'No se pudo generar.'; return; }
+    cargarXlsx(function () {
+      var tot = {}; YS.forEach(function (y) { tot[y] = 0; });
+      j.filas.forEach(function (f) { tot[f.anio] = (tot[f.anio] || 0) + f.costeo.reduce(function (a, b) { return a + +b; }, 0); });
+      var A = [['Anexo B-4'], ['POI Multianual - Programación Física y de Costeo'], ['Años: ' + YS.join(', ')], ['Pliego / Unidad Ejecutora: Autoridad de Transporte Urbano para Lima y Callao - ATU'],
+               ['Centro de costo: ' + (S.cc || 'Todos')], ['Fecha: ' + new Date().toLocaleDateString('es-PE')]];
+      YS.forEach(function (y, i) { A.push(['Costo total del año ' + (i + 1) + ' (' + y + ') S/', r2(tot[y])]); });
+      A.push([]);
+      A.push(['COD.', 'Actividad Operativa / Inversión', 'Centro de costo', 'Ubigeo', 'U.M.', 'Prioridad', 'Periodo multianual', 'Meta'].concat(MES.map(function (m, i) { return i + 1; })).concat(['Total anual']));
+      var oei = null, aei = null, ao = null;
+      j.filas.forEach(function (f) {
+        if (f.cod_oei !== oei) { oei = f.cod_oei; aei = null; A.push([f.oei || f.cod_oei || 'Sin OEI']); }
+        if (f.cod_aei !== aei) { aei = f.cod_aei; A.push([f.aei || f.cod_aei || 'Sin AEI']); }
+        var nuevo = f.id_ao !== ao; ao = f.id_ao;
+        var pri = { 'MUY ALTA': 'Muy alta', 'ALTA': 'Alta', 'MEDIA': 'Media' }[f.prioridad] || '';
+        var base = nuevo ? [f.id_ao, f.ao, f.cc, f.ubigeo, f.um, pri] : ['', '', '', '', '', ''];
+        A.push(base.concat(['Año ' + (YS.indexOf(String(f.anio)) + 1) + ' (' + f.anio + ')', 'Físico']).concat(f.fisico.map(Number)).concat([+f.meta]));
+        A.push(['', '', '', '', '', '', '', 'Costeo S/'].concat(f.costeo.map(Number)).concat([r2(f.costeo.reduce(function (a, b) { return a + +b; }, 0))]));
+      });
+      A.push([]); A.push(['U.M. = Unidad de medida. La prioridad la define el Grupo de Trabajo. Costeo = recursos de la PM3 (priorizado + no priorizado). Meta física = tareas representativas de primer nivel (PM2).']);
+      var wb = XLSX.utils.book_new(), ws = XLSX.utils.aoa_to_sheet(A);
+      ws['!cols'] = [{ wch: 11 }, { wch: 46 }, { wch: 10 }, { wch: 26 }, { wch: 12 }, { wch: 9 }, { wch: 15 }, { wch: 9 }].concat(MES.map(function () { return { wch: 10 }; })).concat([{ wch: 12 }]);
+      XLSX.utils.book_append_sheet(wb, ws, 'Anexo B-4');
+      XLSX.writeFile(wb, 'Anexo_B-4_POI_' + YS[0] + '-' + YS[2] + (S.cc ? '_' + S.cc : '') + '.xlsx');
+      $('repMsg').textContent = '';
+    });
+  });
+}
 function soloLectura() {
   var ro = S.periodo && S.periodo.estado === 'CERRADO', bn = $('roBan');
   if (!bn) { bn = document.createElement('div'); bn.id = 'roBan'; bn.className = 'panel'; bn.style.cssText = 'background:var(--warnbg);border-color:var(--warn);color:var(--warn);font-weight:500'; $('app').querySelector('main').insertBefore(bn, $('app').querySelector('main').firstChild); }
   bn.classList.toggle('hidden', !ro);
   bn.textContent = ro ? 'Periodo ' + YS[0] + '–' + YS[2] + ' cerrado: solo consulta. Para programar, elige el periodo vigente arriba.' : '';
-  if (ro) document.querySelectorAll('.bSave, #bSendNmp, #bAddRow, #fImp, #bVer, #bPer').forEach(function (b) { b.disabled = true; });
+  if (ro) document.querySelectorAll('.bSave, #bSendNmp, #bAddRow, #fImp, #bVer, #bPer, #fCmn, #bCmnUp').forEach(function (b) { b.disabled = true; });
 }
 document.querySelectorAll('nav button').forEach(function (b) {
   b.onclick = function () {
     document.querySelectorAll('nav button').forEach(function (x) { x.classList.toggle('on', x === b); });
     $('tProg').classList.toggle('hidden', b.dataset.t !== 'prog'); $('tNmp').classList.toggle('hidden', b.dataset.t !== 'nmp');
+    $('tCmn').classList.toggle('hidden', b.dataset.t !== 'cmn'); if (b.dataset.t === 'cmn') pintarCmn();
     $('tHist').classList.add('hidden'); $('bHist').setAttribute('aria-pressed', 'false');
   };
 });
@@ -496,6 +789,7 @@ function cargar() {
     $('bExp').classList.toggle('hidden', j.sesion.rol !== 'OPP');
     pintarProg(); pintarNmp(); pintarBandeja(); soloLectura();
     if (!$('tHist').classList.contains('hidden')) cargarHist(false);
+    if (!$('tCmn').classList.contains('hidden')) pintarCmn();
   }).catch(function () { loading(false); });
 }
 
@@ -526,13 +820,14 @@ function estadoAo(a) {
   var ficha = !!(a.descripcion && a.indicador && a.medio);
   var fisica = YS.every(function (y) { return reprAnio(a.id_ao, y) > 0; });
   var cuadra = partidasDe(a.id_ao).every(function (p) { return YS.every(function (y) { return progPartida(a.id_ao, p.llave, y) === apmP(p, y); }); });
-  return { ok: ficha && fisica && cuadra, ficha: ficha, fisica: fisica, cuadra: cuadra };
+  var cmn = !(S.data.cmn && (S.data.cmn.dif_aos || []).indexOf(a.id_ao) >= 0);
+  return { ok: ficha && fisica && cuadra && cmn, ficha: ficha, fisica: fisica, cuadra: cuadra, cmn: cmn };
 }
 function chipAo(a) {
   var e = estadoAo(a);
   if (e.ok) return '<span class="chip ok">Completa</span>';
-  var f = []; if (!e.ficha) f.push('PM1'); if (!e.fisica) { var yf = YS.find(function (y) { return !reprAnio(a.id_ao, y); }) || YS[0]; f.push('PM2 (sin meta ' + yf + ')'); } if (!e.cuadra) f.push('PM3');
-  return f.length === 3 ? '<span class="chip warn">Pendiente</span>' : '<span class="chip info">Falta ' + f.join(', ') + '</span>';
+  var f = []; if (!e.ficha) f.push('PM1'); if (!e.fisica) { var yf = YS.find(function (y) { return !reprAnio(a.id_ao, y); }) || YS[0]; f.push('PM2 (sin meta ' + yf + ')'); } if (!e.cuadra) f.push('PM3'); if (!e.cmn) f.push('cuadre CMN');
+  return f.length >= 3 ? '<span class="chip warn">Pendiente</span>' : '<span class="chip info">Falta ' + f.join(', ') + '</span>';
 }
 
 function pintarKpis() {
@@ -572,16 +867,16 @@ function pintarPanel() {
         '<div><div class="rl-bar"><i class="p" style="width:' + w(pr) + '"></i>' + (dm ? '<i class="n" style="width:' + w(dm) + '"></i>' : '') + '<span class="tm" style="left:calc(' + w(te) + ' - 1px)"></span></div>' +
         '<div class="rl-v"><span>Priorizado <b>S/ ' + fmt(pr) + '</b> de S/ ' + fmt(te) + '</span>' + (dm ? '<span class="n">No priorizado <b>S/ ' + fmt(dm) + '</b></span>' : '') + '<span>Propuesta S/ ' + fmt(pr + dm) + '</span></div></div></div>';
     }).join('') + '</div>';
-  $('aoList').innerHTML = graf + '<div class="panel"><h2>Panel de control · POI ' + YS[0] + '–' + YS[2] + '</h2><p class="sub">Avance de la programación por centro de costo. Haz clic en una fila para abrir sus actividades.</p>' +
+  $('aoList').innerHTML = etapasHtml() + graf + '<div class="panel"><h2>Panel de control · POI ' + YS[0] + '–' + YS[2] + '</h2><p class="sub">Avance de la programación por centro de costo. Haz clic en una fila para abrir sus actividades.</p>' +
     '<div class="pnl-f">' + [['todos', 'Todos'], ['sin', 'Sin carga'], ['proc', 'En proceso'], ['ok', 'Completos']].map(function (f) { return '<button type="button" data-f="' + f[0] + '" class="' + (S.pf === f[0] ? 'on' : '') + '">' + f[1] + ' (' + cnt[f[0]] + ')</button>'; }).join('') +
     '<input id="pnlQ" placeholder="Buscar centro de costo o unidad" value="' + esc(S.pq) + '"></div>' +
-    '<div class="tw"><table class="pnl"><thead><tr><th class="l">Centro de costo</th><th>Actividades<br>cargadas</th><th>Completas</th><th>Propuesta<br>' + YS[0] + ' (S/)</th><th>Techo APM<br>' + YS[0] + ' (S/)</th><th>Priorizado<br>' + YS[0] + ' (S/)</th><th>Avance</th><th>No priorizado<br>' + YS[0] + ' (S/)</th><th>Última carga</th><th>Estado</th></tr></thead><tbody>' +
-    (vis.length ? vis.map(function (r) { var p = pct(+r.prog_a1, +r.apm_a1); return '<tr data-cc="' + esc(r.cc) + '"><td class="l"><b>' + esc(r.cc) + '</b><div class="uo">' + esc(r.uo) + '</div></td><td class="num">' + r.cargadas + ' de ' + r.aos + '</td><td class="num">' + r.completas + '</td><td class="num">' + (+r.prog_a1 + +r.demanda_a1 ? fmt(+r.prog_a1 + +r.demanda_a1) : '—') + '</td><td class="num">' + fmt(r.apm_a1) + '</td><td class="num">' + fmt(r.prog_a1) + '</td><td><div class="av"><div class="bar"><i style="width:' + p + '%"></i></div><span class="num">' + pctTxt(+r.prog_a1, +r.apm_a1) + '</span></div></td><td class="num">' + (+r.demanda_a1 ? fmt(r.demanda_a1) : '—') + '</td><td class="num nw">' + esc(r.actualizado || '—') + '</td><td>' + etq[estPanel(r)] + '</td></tr>'; }).join('')
-      : '<tr><td class="l" colspan="10" style="color:var(--mut)">Ningún centro de costo coincide.</td></tr>') +
+    '<div class="tw"><table class="pnl"><thead><tr><th class="l">Centro de costo</th><th>Actividades<br>cargadas</th><th>Completas</th><th>Propuesta<br>' + YS[0] + ' (S/)</th><th>Techo APM<br>' + YS[0] + ' (S/)</th><th>Priorizado<br>' + YS[0] + ' (S/)</th><th>Avance</th><th>No priorizado<br>' + YS[0] + ' (S/)</th><th>Última carga</th><th>CMN</th><th>Estado</th></tr></thead><tbody>' +
+    (vis.length ? vis.map(function (r) { var p = pct(+r.prog_a1, +r.apm_a1); return '<tr data-cc="' + esc(r.cc) + '"><td class="l"><b>' + esc(r.cc) + '</b><div class="uo">' + esc(r.uo) + '</div></td><td class="num">' + r.cargadas + ' de ' + r.aos + '</td><td class="num">' + r.completas + '</td><td class="num">' + (+r.prog_a1 + +r.demanda_a1 ? fmt(+r.prog_a1 + +r.demanda_a1) : '—') + '</td><td class="num">' + fmt(r.apm_a1) + '</td><td class="num">' + fmt(r.prog_a1) + '</td><td><div class="av"><div class="bar"><i style="width:' + p + '%"></i></div><span class="num">' + pctTxt(+r.prog_a1, +r.apm_a1) + '</span></div></td><td class="num">' + (+r.demanda_a1 ? fmt(r.demanda_a1) : '—') + '</td><td class="num nw">' + esc(r.actualizado || '—') + '</td><td>' + chipCmn(r) + '</td><td>' + etq[estPanel(r)] + '</td></tr>'; }).join('')
+      : '<tr><td class="l" colspan="11" style="color:var(--mut)">Ningún centro de costo coincide.</td></tr>') +
     '</tbody></table></div></div>' +
     '<div class="panel"><h2>Versiones del POI</h2><p class="sub">Cierra una versión para congelar la programación tal como está (por ejemplo, al presentar el proyecto de ley). Sirve para comparar después con el PIA.</p>' +
     '<div class="lst">' + ((S.data.versiones || []).length ? S.data.versiones.map(function (v) { return '<div class="it"><div class="top"><b>' + esc(v.nombre) + '</b><span class="chip info">' + esc(v.etapa) + '</span><span class="hint">' + esc(v.fecha) + ' · ' + esc(v.por) + '</span><span class="sp" style="flex:1"></span><span class="num">Priorizado ' + YS[0] + ' S/ ' + fmt(v.priorizado_a1) + ' · No priorizado S/ ' + fmt(v.no_priorizado_a1) + '</span></div></div>'; }).join('') : '<p class="empty">Aún no hay versiones cerradas.</p>') + '</div>' +
-    '<div class="acts"><button class="btn sec" type="button" id="bVer">Cerrar versión ahora</button><span class="msg" id="verMsg"></span></div></div>' +
+    '<div class="acts ver-f"><label for="verEt">Etapa</label><select class="inp" id="verEt">' + ETAPAS_VER.map(function (e) { return '<option' + (e === etapaHoy().ver ? ' selected' : '') + '>' + e + '</option>'; }).join('') + '</select><button class="btn sec" type="button" id="bVer">Cerrar versión ahora</button><span class="msg" id="verMsg"></span></div></div>' +
     (S.periodo && S.periodo.estado === 'ACTIVO' ? '<div class="panel"><h2>Siguiente POI Multianual</h2><p class="sub">Abre el periodo ' + (+YS[0] + 1) + '–' + (+YS[2] + 1) + ': copia las actividades y la programación de ' + YS[1] + ' y ' + YS[2] + ', deja ' + (+YS[2] + 1) + ' en blanco y cierra el periodo ' + YS[0] + '–' + YS[2] + ' (queda para consulta). Se usa una vez al año, cuando empieza la formulación del nuevo POI.</p>' +
     '<div class="acts"><button class="btn sec" type="button" id="bPer">Iniciar periodo ' + (+YS[0] + 1) + '–' + (+YS[2] + 1) + '</button><span class="msg" id="perMsg"></span></div></div>' : '');
   if ($('bPer')) $('bPer').onclick = function () {
@@ -595,9 +890,9 @@ function pintarPanel() {
     }).catch(function () { b.disabled = false; });
   };
   $('bVer').onclick = function () {
-    var n = prompt('Nombre de la versión:', 'Proyecto de Ley ' + YS[0]); if (!n) return;
+    var et = $('verEt').value, n = prompt('Nombre de la versión (' + et + '):', nombreVer(et)); if (!n) return;
     var b = this; b.disabled = true; $('verMsg').className = 'msg'; $('verMsg').textContent = 'Guardando versión…';
-    api('cerrarVersion', { nombre: n, etapa: 'Proyecto de ley' }).then(function (j) {
+    api('cerrarVersion', { nombre: n, etapa: et }).then(function (j) {
       b.disabled = false;
       if (!j.ok) { $('verMsg').className = 'msg bad'; $('verMsg').textContent = j.error || 'No se pudo cerrar la versión.'; return; }
       cargar();
@@ -630,7 +925,10 @@ function htmlAo(a) {
     '<div><label>Beneficiarios</label><textarea class="inp f-ben">' + esc(a.beneficiarios) + '</textarea></div>' +
     '<div><label>Indicador</label><textarea class="inp f-ind">' + esc(a.indicador) + '</textarea></div>' +
     '<div><label>Medio de verificación</label><textarea class="inp f-med">' + esc(a.medio) + '</textarea></div>' +
-    '<div><label>Unidad de medida de la actividad</label><input class="inp f-um" value="' + esc(a.unidad_medida) + '"></div></div>' +
+    '<div><label>Unidad de medida de la actividad</label><input class="inp f-um" value="' + esc(a.unidad_medida) + '"></div>' +
+    '<div><label>Prioridad</label><select class="inp f-pri"><option value="">Sin definir</option>' + [['MUY ALTA', 'Muy alta'], ['ALTA', 'Alta'], ['MEDIA', 'Media']].map(function (o) { return '<option value="' + o[0] + '"' + (a.prioridad === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select></div>' +
+    '<div class="ubi"><label>Ubigeo (dónde se realiza)</label><div class="ubi3"><input class="inp f-dep" placeholder="Departamento" aria-label="Departamento" value="' + esc(a.departamento) + '"><input class="inp f-prov" placeholder="Provincia" aria-label="Provincia" value="' + esc(a.provincia) + '"><input class="inp f-dis" placeholder="Distrito" aria-label="Distrito" value="' + esc(a.distrito) + '"></div></div></div>' +
+    '<p class="hint red-ao">' + redAo(a.nombre_ao) + '</p>' +
     '<div class="tw" style="margin-top:12px"><table class="pm1"><thead><tr><th class="l">Año</th><th>Meta física (PM2)</th><th>Programación financiera (PM3)</th><th>APM (S/)</th><th>Diferencia (S/)</th></tr></thead><tbody></tbody></table></div>' +
     '<div class="yrs" role="tablist">' + YS.map(function (y) { return '<button type="button" data-y="' + y + '" class="' + (S.anio[a.id_ao] === y ? 'on' : '') + '">' + y + '</button>'; }).join('') + '</div>' +
     '<h3>PM2 · Programación física <span class="ylab"></span></h3>' +
@@ -662,10 +960,10 @@ function pintarAo(a) {
       v.map(function (x, m) { return '<td><input class="mi t-m" data-m="' + m + '" value="' + (x ? fmt2(x) : '') + '"' + (hs && !t.propio ? ' readonly tabindex="-1"' : '') + ' inputmode="decimal" aria-label="' + MES[m] + '"></td>'; }).join('') +
       '<td class="num">' + fmt2(totT(t, y)) + '</td><td class="nw">' + (hs ? '<button class="mini t-prop" type="button" title="' + (t.propio ? 'Volver a sumar las subtareas' : 'Escribir la meta de esta tarea en lugar de sumar las subtareas') + '">' + (t.propio ? 'Σ sumar' : '✎ propio') + '</button> ' : '') + '<button class="mini t-sub" type="button" title="Agregar subtarea">+ sub</button> <button class="del t-del" type="button" title="Quitar">×</button></td></tr>';
   }).join('');
-  box.querySelector('.pm3 thead').innerHTML = '<tr><th class="l">Recurso</th><th>Tarea</th><th>Partida APM</th><th>Unidad</th><th>N° previsión</th><th>Cant.</th>' + MES.map(function (m) { return '<th>' + m + '</th>'; }).join('') + '<th>Total</th><th></th></tr>';
+  box.querySelector('.pm3 thead').innerHTML = '<tr><th class="l">Recurso</th><th>Tarea</th><th>Partida APM</th><th>Unidad</th><th>N° previsión</th><th title="Código del ítem en el catálogo SIGA / CUBSO: vincula el recurso con el Cuadro de Necesidades">Ítem SIGA</th><th>Cant.</th>' + MES.map(function (m) { return '<th>' + m + '</th>'; }).join('') + '<th>Total</th><th></th></tr>';
   box.querySelector('.pm3 tbody').innerHTML = recursosDe(id).map(function (r) {
     return '<tr data-k="' + r.k + '"><td class="l"><input class="tx r-nom" value="' + esc(r.nombre) + '" placeholder="Recurso"></td><td><select class="r-tar">' + opcTareas(id, r.tarea) + '</select></td><td><select class="r-par">' + opcPartidas(id, r.llave) + '</select></td>' +
-      '<td><input class="sx r-um" value="' + esc(r.um) + '" placeholder="Unidad"></td><td><input class="sx r-prev" value="' + esc(r.prev) + '" placeholder="N° / año"></td><td><input class="cx r-cant" value="' + esc(r.cant[y]) + '"></td>' +
+      '<td><input class="sx r-um" value="' + esc(r.um) + '" placeholder="Unidad"></td><td><input class="sx r-prev" value="' + esc(r.prev) + '" placeholder="N° / año"></td><td><input class="sx r-item" value="' + esc(r.item || '') + '" placeholder="Código" inputmode="numeric" aria-label="Código de ítem SIGA"></td><td><input class="cx r-cant" value="' + esc(r.cant[y]) + '"></td>' +
       r.y[y].map(function (x, m) { return '<td><input class="mi r-m" data-m="' + m + '" value="' + (x ? fmt2(x) : '') + '" inputmode="decimal" aria-label="' + MES[m] + '"></td>'; }).join('') +
       '<td class="num">' + fmt2(totR(r, y)) + '</td><td class="nw"><button class="mini r-fill" type="button" title="Repartir en 12 meses lo que falta de la partida">÷12</button> <button class="del r-del" type="button" title="Quitar">×</button></td></tr>';
   }).join('');
@@ -728,6 +1026,7 @@ function enlazarTablas(a) {
     tr.querySelector('.r-nom').oninput = function () { r.nombre = this.value; };
     tr.querySelector('.r-um').oninput = function () { r.um = this.value; };
     tr.querySelector('.r-prev').oninput = function () { r.prev = this.value; };
+    tr.querySelector('.r-item').oninput = function () { r.item = this.value.replace(/\s/g, ''); };
     tr.querySelector('.r-cant').oninput = function () { r.cant[S.anio[id]] = this.value; };
     tr.querySelector('.r-tar').onchange = function () { r.tarea = this.value; };
     tr.querySelector('.r-par').onchange = function () { r.llave = this.value; resumen(a); };
@@ -760,14 +1059,15 @@ function enlazarAo(a) {
     S.data.recursos.push({ k: 'n' + (++S.seq), id: '', id_ao: id, tarea: t0 ? t0.codigo : '1', nombre: '', um: '', llave: '', prev: '', cant: (function () { var o = {}; YS.forEach(function (y) { o[y] = ''; }); return o; })(), y: nuevoY() }); pintarAo(a);
   };
   box.querySelector('.bSave').onclick = function () { guardarAo(a, 'Portal'); };
+  box.querySelector('.f-nombre').addEventListener('input', function () { box.querySelector('.red-ao').innerHTML = redAo(this.value); });
 }
 function payloadAo(a, origen) {
   var box = $('ao-' + a.id_ao), id = a.id_ao;
   return {
     id_ao: id, origen: origen,
-    pa1: { nombre_ao: box.querySelector('.f-nombre').value, descripcion: box.querySelector('.f-desc').value, beneficiarios: box.querySelector('.f-ben').value, indicador: box.querySelector('.f-ind').value, medio: box.querySelector('.f-med').value, unidad_medida: box.querySelector('.f-um').value },
+    pa1: { nombre_ao: box.querySelector('.f-nombre').value, descripcion: box.querySelector('.f-desc').value, beneficiarios: box.querySelector('.f-ben').value, indicador: box.querySelector('.f-ind').value, medio: box.querySelector('.f-med').value, unidad_medida: box.querySelector('.f-um').value, prioridad: box.querySelector('.f-pri').value, departamento: box.querySelector('.f-dep').value, provincia: box.querySelector('.f-prov').value, distrito: box.querySelector('.f-dis').value },
     pm2: S.data.tareas.filter(function (t) { return t.id_ao === id && (t.id || !t.eliminar); }).map(function (t) { return { id: t.id, codigo: t.codigo, nombre: t.nombre, repr: t.repr, acum: t.acum, um: t.um, y: t.y, eliminar: !!t.eliminar, propio: !!t.propio }; }),
-    pm3: S.data.recursos.filter(function (r) { return r.id_ao === id && (r.id || !r.eliminar); }).map(function (r) { return { id: r.id, tarea: r.tarea, nombre: r.nombre, um: r.um, llave: r.llave, prev: r.prev, cant: r.cant, y: r.y, eliminar: !!r.eliminar, demanda: !!r.demanda, ff: r.ff || '', clasificador: r.clasificador || '' }; })
+    pm3: S.data.recursos.filter(function (r) { return r.id_ao === id && (r.id || !r.eliminar); }).map(function (r) { return { id: r.id, tarea: r.tarea, nombre: r.nombre, um: r.um, llave: r.llave, prev: r.prev, item: r.item || '', cant: r.cant, y: r.y, eliminar: !!r.eliminar, demanda: !!r.demanda, ff: r.ff || '', clasificador: r.clasificador || '' }; })
   };
 }
 function guardarAo(a, origen, alTerminar) {
@@ -778,10 +1078,11 @@ function guardarAo(a, origen, alTerminar) {
   return api('guardarAO', payload).then(function (j) {
     btn.disabled = false;
     if (!j.ok) { msg.className = 'msg bad'; msg.textContent = j.error || 'No se pudo guardar.'; if (alTerminar) alTerminar(false, j.error); return; }
-    a.nombre_ao = payload.pa1.nombre_ao; a.descripcion = payload.pa1.descripcion; a.beneficiarios = payload.pa1.beneficiarios; a.indicador = payload.pa1.indicador; a.medio = payload.pa1.medio; a.unidad_medida = payload.pa1.unidad_medida || a.unidad_medida; YS.forEach(function (yy) { a['meta_' + yy] = reprAnio(a.id_ao, yy); });
+    a.nombre_ao = payload.pa1.nombre_ao; a.descripcion = payload.pa1.descripcion; a.beneficiarios = payload.pa1.beneficiarios; a.indicador = payload.pa1.indicador; a.medio = payload.pa1.medio; a.unidad_medida = payload.pa1.unidad_medida || a.unidad_medida; a.prioridad = payload.pa1.prioridad; a.departamento = (payload.pa1.departamento || a.departamento || '').toUpperCase(); a.provincia = (payload.pa1.provincia || a.provincia || '').toUpperCase(); a.distrito = (payload.pa1.distrito || a.distrito || '').toUpperCase(); YS.forEach(function (yy) { a['meta_' + yy] = reprAnio(a.id_ao, yy); });
     var hora = new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
     return api('datos').then(function (d) {
       if (d.ok) {
+        S.data.cmn = d.cmn || S.data.cmn;
         S.data.tareas = S.data.tareas.filter(function (t) { return t.id_ao !== a.id_ao; }).concat(d.tareas.filter(function (t) { return t.id_ao === a.id_ao; }).map(function (t) { t.k = 's' + (++S.seq); return t; }));
         S.data.recursos = S.data.recursos.filter(function (r) { return r.id_ao !== a.id_ao; }).concat(d.recursos.filter(function (r) { return r.id_ao === a.id_ao; }).map(function (r) { r.k = 's' + (++S.seq); return r; }));
       }
