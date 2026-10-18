@@ -516,7 +516,8 @@ function buscar(rows, pred) { for (var i = 0; i < rows.length; i++) for (var j =
 function derecha(rows, i, j) { for (var k = j + 1; k < rows[i].length; k++) if (String(rows[i][k]).trim() !== '') return String(rows[i][k]).trim(); return ''; }
 function abajo(rows, i) { for (var k = i + 1; k < Math.min(rows.length, i + 4); k++) { var t = rows[k].map(function (x) { return String(x).trim(); }).filter(Boolean); if (t.length) return t.join(' '); } return ''; }
 function bloques(rows, h) { var b = {}; rows[h].forEach(function (c, j) { var m = String(c).match(/(20\d\d)/); if (m && YS.indexOf(m[1]) >= 0) b[m[1]] = j; }); return b; }
-function esCod(v) { return /^\d+(\.\d+)*$/.test(String(v).trim()); }
+function codTxt(v) { var t = String(v == null ? '' : v).trim(); return /^[\dOo]+(\.[\dOo]+)*$/.test(t) && /\d/.test(t) ? t.replace(/[Oo]/g, '0') : t; }
+function esCod(v) { return /^\d+(\.\d+)*$/.test(codTxt(v)); }
 function leerPM(wb) {
   var p1 = hoja(wb, 'pm1'), p2 = hoja(wb, 'pm2'), p3 = hoja(wb, 'pm3');
   if (!p1 || !p2 || !p3) throw new Error('El archivo debe tener las hojas PM 1, PM 2 y PM 3.');
@@ -534,7 +535,7 @@ function leerPM(wb) {
   for (var i = hr + 2; i < p2.length; i++) {
     var row = p2[i], cod = '', nom = '', k;
     if (String(row[1]).trim() !== '' && !esCod(row[2]) && esCod(row[1])) continue;
-    for (k = 2; k < cRep; k++) { if (esCod(row[k]) && String(row[k]).trim() !== '') { cod = String(row[k]).trim(); for (var q = k + 1; q < cRep; q++) if (String(row[q]).trim()) { nom = String(row[q]).trim(); break; } break; } }
+    for (k = 2; k < cRep; k++) { if (esCod(row[k]) && String(row[k]).trim() !== '') { cod = codTxt(row[k]); for (var q = k + 1; q < cRep; q++) if (String(row[q]).trim()) { nom = String(row[q]).trim(); break; } break; } }
     if (!cod) { if (norm(row[1]).indexOf('*') === 0) break; continue; }
     if (/^\d+$/.test(cod) && typeof row[k] === 'number' && String(row[k]).indexOf('.') > 0) cod = String(row[k]);
     var t = { codigo: cod, nombre: nom, repr: String(row[cRep]).trim() !== '' && String(row[cRep]).trim() !== '0', acum: String(row[cAcu]).trim() !== '' && String(row[cAcu]).trim() !== '0', um: String(row[cUm]).trim(), y: nuevoY() };
@@ -548,7 +549,7 @@ function leerPM(wb) {
   for (i = hr + 2; i < p3.length; i++) {
     row = p3[i];
     var cl = String(row[cCl] || '').trim(), cod3 = '', nom3 = '';
-    for (k = 2; k < cU3; k++) { if (String(row[k]).trim() !== '' && esCod(row[k])) { cod3 = String(row[k]).trim(); for (q = k + 1; q < cU3; q++) if (String(row[q]).trim()) { nom3 = String(row[q]).trim(); break; } break; } }
+    for (k = 2; k < cU3; k++) { if (String(row[k]).trim() !== '' && esCod(row[k])) { cod3 = codTxt(row[k]); for (q = k + 1; q < cU3; q++) if (String(row[q]).trim()) { nom3 = String(row[q]).trim(); break; } break; } }
     if (!cl) { if (cod3) tareaAct = cod3; continue; }
     var r = { tarea: tareaAct, nombre: nom3 || cl, um: String(row[cU3]).trim(), ff: String(row[cFF] || '').trim(), clasificador: cl, prev: cPv >= 0 ? String(row[cPv]).trim() : '', cant: {}, y: nuevoY() };
     YS.forEach(function (y) { if (b3[y] !== undefined) { r.cant[y] = String(row[b3[y]]).trim(); r.y[y] = MES.map(function (m, x) { return r2(pn(row[b3[y] + 1 + x]) || 0); }); } else r.cant[y] = ''; });
@@ -625,8 +626,9 @@ function aplicarImport(x, a) {
   libresT.forEach(function (i) { S.data.tareas.push({ k: 'n' + (++S.seq), id: i, id_ao: id, codigo: '0', nombre: '', repr: false, acum: false, um: '', y: nuevoY(), eliminar: true }); });
   libresR.forEach(function (i) { S.data.recursos.push({ k: 'n' + (++S.seq), id: i, id_ao: id, tarea: '', nombre: '', um: '', llave: '', prev: '', cant: {}, y: nuevoY(), eliminar: true }); });
   var box = $('ao-' + id);
-  ['nombre_ao', 'descripcion', 'beneficiarios', 'indicador', 'medio'].forEach(function (k, i) { var v = x.pm1[k]; if (v) box.querySelector(['.f-nombre', '.f-desc', '.f-ben', '.f-ind', '.f-med'][i]).value = v; });
+  ['nombre_ao', 'descripcion', 'beneficiarios', 'indicador', 'medio'].forEach(function (k) { var v = x.pm1[k]; if (v) a[k] = v; });
   box.querySelector('.ao-b').classList.remove('hidden'); pintarAo(a);
+  ['nombre_ao', 'descripcion', 'beneficiarios', 'indicador', 'medio'].forEach(function (k, i) { var el = box.querySelector(['.f-nombre', '.f-desc', '.f-ben', '.f-ind', '.f-med'][i]); if (el && a[k]) el.value = a[k]; });
   $('impRes').className = 'msg'; $('impRes').textContent = 'Guardando…';
   guardarAo(a, 'Importado', function (ok, err) { $('impRes').className = 'msg ' + (ok ? 'ok' : 'bad'); $('impRes').textContent = ok ? 'Importado en ' + id + '. Revisa los avisos de cuadre en la actividad.' : (err || 'No se pudo importar.'); });
 }
