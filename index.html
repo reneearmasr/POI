@@ -290,7 +290,7 @@ function partidasDe(id) { return S.data.partidas.filter(function (p) { return p.
 function cmpCod(a, b) { var x = String(a).split('.'), y = String(b).split('.'); for (var i = 0; i < Math.max(x.length, y.length); i++) { var d = (+x[i] || 0) - (+y[i] || 0); if (x[i] === undefined) return -1; if (y[i] === undefined) return 1; if (d) return d; } return 0; }
 function padre(c) { return String(c).split('.').slice(0, -1).join('.'); }
 function hijosDe(id, c) { return tareasDe(id).filter(function (t) { return padre(t.codigo) === c; }); }
-function valT(t, y) { var hs = hijosDe(t.id_ao, t.codigo); if (!hs.length) return t.y[y]; return t.y[y].map(function (v, i) { return r2(hs.reduce(function (s, h) { return s + valT(h, y)[i]; }, 0)); }); }
+function valT(t, y) { var hs = hijosDe(t.id_ao, t.codigo); if (!hs.length || t.propio) return t.y[y]; return t.y[y].map(function (v, i) { return r2(hs.reduce(function (s, h) { return s + valT(h, y)[i]; }, 0)); }); }
 function totT(t, y) { var v = valT(t, y); return t.acum ? r2(v.reduce(function (a, b) { return a + b; }, 0)) : Math.max.apply(null, [0].concat(v)); }
 function reprAnio(id, y) { return r2(tareasDe(id).filter(function (t) { return t.repr && t.codigo.indexOf('.') < 0; }).reduce(function (s, t) { return s + totT(t, y); }, 0)); }
 function totR(r, y) { return r2(r.y[y].reduce(function (a, b) { return a + (Number(b) || 0); }, 0)); }
@@ -308,7 +308,7 @@ function estadoAo(a) {
 function chipAo(a) {
   var e = estadoAo(a);
   if (e.ok) return '<span class="chip ok">Completa</span>';
-  var f = []; if (!e.ficha) f.push('PM1'); if (!e.fisica) f.push('PM2'); if (!e.cuadra) f.push('PM3');
+  var f = []; if (!e.ficha) f.push('PM1'); if (!e.fisica) { var yf = YS.find(function (y) { return r2(reprAnio(a.id_ao, y)) !== r2(a['meta_' + y]) || !reprAnio(a.id_ao, y); }) || '2027'; f.push('PM2 (' + yf + ': ' + fmt2(reprAnio(a.id_ao, yf)) + ' de ' + fmt2(a['meta_' + yf]) + ')'); } if (!e.cuadra) f.push('PM3');
   return f.length === 3 ? '<span class="chip warn">Pendiente</span>' : '<span class="chip info">Falta ' + f.join(', ') + '</span>';
 }
 
@@ -370,8 +370,8 @@ function pintarAo(a) {
     return '<tr data-k="' + t.k + '"' + (hs ? ' class="par"' : '') + '><td class="l"><div class="tn" style="padding-left:' + (lv * 14) + 'px"><input class="cod t-cod" value="' + esc(t.codigo) + '" aria-label="Código"><input class="tx t-nom" value="' + esc(t.nombre) + '" placeholder="Tarea o acción"></div></td>' +
       '<td class="c"><input type="checkbox" class="t-rep"' + (t.repr ? ' checked' : '') + ' aria-label="Representativa"></td><td class="c"><input type="checkbox" class="t-acu"' + (t.acum ? ' checked' : '') + ' aria-label="Acumulativa"></td>' +
       '<td><input class="sx t-um" value="' + esc(t.um) + '" placeholder="Unidad"></td>' +
-      v.map(function (x, m) { return '<td><input class="mi t-m" data-m="' + m + '" value="' + (x ? fmt2(x) : '') + '"' + (hs ? ' readonly tabindex="-1"' : '') + ' inputmode="decimal" aria-label="' + MES[m] + '"></td>'; }).join('') +
-      '<td class="num">' + fmt2(totT(t, y)) + '</td><td class="nw"><button class="mini t-sub" type="button" title="Agregar subtarea">+ sub</button> <button class="del t-del" type="button" title="Quitar">×</button></td></tr>';
+      v.map(function (x, m) { return '<td><input class="mi t-m" data-m="' + m + '" value="' + (x ? fmt2(x) : '') + '"' + (hs && !t.propio ? ' readonly tabindex="-1"' : '') + ' inputmode="decimal" aria-label="' + MES[m] + '"></td>'; }).join('') +
+      '<td class="num">' + fmt2(totT(t, y)) + '</td><td class="nw">' + (hs ? '<button class="mini t-prop" type="button" title="' + (t.propio ? 'Volver a sumar las subtareas' : 'Escribir la meta de esta tarea en lugar de sumar las subtareas') + '">' + (t.propio ? 'Σ sumar' : '✎ propio') + '</button> ' : '') + '<button class="mini t-sub" type="button" title="Agregar subtarea">+ sub</button> <button class="del t-del" type="button" title="Quitar">×</button></td></tr>';
   }).join('');
   box.querySelector('.pm3 thead').innerHTML = '<tr><th class="l">Recurso</th><th>Tarea</th><th>Partida APM</th><th>Unidad</th><th>N° previsión</th><th>Cant.</th>' + MES.map(function (m) { return '<th>' + m + '</th>'; }).join('') + '<th>Total</th><th></th></tr>';
   box.querySelector('.pm3 tbody').innerHTML = recursosDe(id).map(function (r) {
@@ -418,6 +418,11 @@ function enlazarTablas(a) {
       inp.oninput = function () { var v = pn(inp.value); t.y[S.anio[id]][+inp.dataset.m] = isNaN(v) ? 0 : v; };
       inp.onchange = function () { pintarAo(a); };
     });
+    var bp = tr.querySelector('.t-prop');
+    if (bp) bp.onclick = function () {
+      if (!t.propio) { YS.forEach(function (yy) { t.y[yy] = valT(t, yy).slice(); }); t.propio = true; } else t.propio = false;
+      pintarAo(a);
+    };
     tr.querySelector('.t-sub').onclick = function () {
       var hs = hijosDe(id, t.codigo), n = hs.reduce(function (mx, h) { return Math.max(mx, +h.codigo.split('.').pop()); }, 0) + 1;
       S.data.tareas.push({ k: 'n' + (++S.seq), id: '', id_ao: id, codigo: t.codigo + '.' + n, nombre: '', repr: t.repr, acum: t.acum, um: t.um, y: nuevoY() });
@@ -472,7 +477,7 @@ function payloadAo(a, origen) {
   return {
     id_ao: id, origen: origen,
     pa1: { nombre_ao: box.querySelector('.f-nombre').value, descripcion: box.querySelector('.f-desc').value, beneficiarios: box.querySelector('.f-ben').value, indicador: box.querySelector('.f-ind').value, medio: box.querySelector('.f-med').value },
-    pm2: S.data.tareas.filter(function (t) { return t.id_ao === id && (t.id || !t.eliminar); }).map(function (t) { return { id: t.id, codigo: t.codigo, nombre: t.nombre, repr: t.repr, acum: t.acum, um: t.um, y: t.y, eliminar: !!t.eliminar }; }),
+    pm2: S.data.tareas.filter(function (t) { return t.id_ao === id && (t.id || !t.eliminar); }).map(function (t) { return { id: t.id, codigo: t.codigo, nombre: t.nombre, repr: t.repr, acum: t.acum, um: t.um, y: t.y, eliminar: !!t.eliminar, propio: !!t.propio }; }),
     pm3: S.data.recursos.filter(function (r) { return r.id_ao === id && (r.id || !r.eliminar); }).map(function (r) { return { id: r.id, tarea: r.tarea, nombre: r.nombre, um: r.um, llave: r.llave, prev: r.prev, cant: r.cant, y: r.y, eliminar: !!r.eliminar, demanda: !!r.demanda, ff: r.ff || '', clasificador: r.clasificador || '' }; })
   };
 }
@@ -623,6 +628,7 @@ function aplicarImport(x, a) {
   x.tareas.forEach(function (t) { S.data.tareas.push({ k: 'n' + (++S.seq), id: nt(), id_ao: id, codigo: t.codigo, nombre: t.nombre, repr: t.repr, acum: t.acum, um: t.um || a.unidad_medida, y: t.y }); });
   x._ok.forEach(function (o) { var r = o.src; S.data.recursos.push({ k: 'n' + (++S.seq), id: nr(), id_ao: id, tarea: r.tarea, nombre: r.nombre, um: r.um, llave: o.llave, prev: r.prev, cant: r.cant, y: o.y }); });
   x._dem.forEach(function (o) { var r = o.src; S.data.recursos.push({ k: 'n' + (++S.seq), id: nr(), id_ao: id, demanda: true, ff: r.ff || '', clasificador: r.clasificador, tarea: r.tarea, nombre: r.nombre + ' — ' + o.motivo.toLowerCase(), um: r.um, llave: o.llave, prev: r.prev, cant: r.cant, y: o.y }); });
+  tareasDe(id).forEach(function (t) { t.propio = hijosDe(id, t.codigo).length > 0 && YS.some(function (yy) { return t.y[yy].some(function (v) { return v; }); }); });
   libresT.forEach(function (i) { S.data.tareas.push({ k: 'n' + (++S.seq), id: i, id_ao: id, codigo: '0', nombre: '', repr: false, acum: false, um: '', y: nuevoY(), eliminar: true }); });
   libresR.forEach(function (i) { S.data.recursos.push({ k: 'n' + (++S.seq), id: i, id_ao: id, tarea: '', nombre: '', um: '', llave: '', prev: '', cant: {}, y: nuevoY(), eliminar: true }); });
   var box = $('ao-' + id);

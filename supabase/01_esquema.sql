@@ -116,7 +116,8 @@ create table if not exists poi.pm2_tarea (
   estado          text not null default 'ACTIVA',
   origen          text,
   actualizado     timestamptz,
-  actualizado_por text
+  actualizado_por text,
+  propio          boolean not null default false   -- tarea padre con meta puesta por el área (no suma subtareas)
 );
 create index if not exists pm2_ao on poi.pm2_tarea (id_ao);
 

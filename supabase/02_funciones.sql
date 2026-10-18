@@ -199,7 +199,7 @@ begin
 
   select coalesce(jsonb_agg(jsonb_build_object(
       'id', t.id_tarea, 'id_ao', t.id_ao, 'codigo', coalesce(t.codigo, ''), 'nombre', coalesce(t.nombre, ''),
-      'repr', t.repr, 'acum', t.acum, 'um', coalesce(t.um, ''),
+      'repr', t.repr, 'acum', t.acum, 'um', coalesce(t.um, ''), 'propio', t.propio,
       'y', jsonb_build_object('2027', to_jsonb(t.m2027), '2028', to_jsonb(t.m2028), '2029', to_jsonb(t.m2029))
     ) order by t.id_tarea), '[]') into tareas
   from poi.pm2_tarea t join poi.ao a on a.id_ao = t.id_ao and a.centro_costo = cc
@@ -252,7 +252,7 @@ begin
   -- ===== PM2 =====
   drop table if exists _t;
   create temp table _t (id text, codigo text, nombre text, repr boolean, acum boolean, um text,
-                        m2027 numeric[], m2028 numeric[], m2029 numeric[], elim boolean, padre text, prof int) on commit drop;
+                        m2027 numeric[], m2028 numeric[], m2029 numeric[], elim boolean, padre text, prof int, propio boolean) on commit drop;
   select coalesce(max(substring(id_tarea from '-T(\d+)$')::int), 0) into max_t from poi.pm2_tarea where id_ao = v_id;
   for e in select value from jsonb_array_elements(case when jsonb_typeof(b -> 'pm2') = 'array' then b -> 'pm2' else '[]' end) loop
     v_tid := poi.t(e ->> 'id');
@@ -272,7 +272,7 @@ begin
     end if;
     insert into _t values (v_tid, v_cod, v_nom, poi.b(e -> 'repr'), poi.b(e -> 'acum'), poi.t(e ->> 'um'),
                            poi.arr(an -> '2027'), poi.arr(an -> '2028'), poi.arr(an -> '2029'), v_elim,
-                           poi.padre(v_cod), coalesce(array_length(string_to_array(v_cod, '.'), 1), 0));
+                           poi.padre(v_cod), coalesce(array_length(string_to_array(v_cod, '.'), 1), 0), poi.b(e -> 'propio'));
   end loop;
   if not exists (select 1 from _t where not elim) then perform poi.falla('La actividad debe tener al menos una tarea (PM2).'); end if;
   select codigo into x from _t where not elim group by codigo having count(*) > 1 limit 1;
@@ -280,14 +280,14 @@ begin
   select t.codigo, t.padre into x, y2 from _t t
    where not t.elim and t.padre <> '' and not exists (select 1 from _t q where not q.elim and q.codigo = t.padre) limit 1;
   if x is not null then perform poi.falla('La tarea ' || x || ' no tiene tarea padre ' || y2 || '.'); end if;
-  -- Los padres suman a sus hijos, de abajo hacia arriba
+  -- Los padres suman a sus hijos, de abajo hacia arriba (salvo que el área haya puesto su propio valor)
   select max(prof) into maxd from _t where not elim;
   for d in reverse (maxd - 1)..1 loop
     update _t p set
       m2027 = (select array_agg(round(sm, 2) order by i) from (select i, sum(c.m2027[i]) sm from _t c cross join generate_series(1, 12) i where not c.elim and c.padre = p.codigo group by i) z),
       m2028 = (select array_agg(round(sm, 2) order by i) from (select i, sum(c.m2028[i]) sm from _t c cross join generate_series(1, 12) i where not c.elim and c.padre = p.codigo group by i) z),
       m2029 = (select array_agg(round(sm, 2) order by i) from (select i, sum(c.m2029[i]) sm from _t c cross join generate_series(1, 12) i where not c.elim and c.padre = p.codigo group by i) z)
-    where not p.elim and p.prof = d and exists (select 1 from _t c where not c.elim and c.padre = p.codigo);
+    where not p.elim and not p.propio and p.prof = d and exists (select 1 from _t c where not c.elim and c.padre = p.codigo);
   end loop;
   if not exists (select 1 from _t where not elim and repr and prof = 1) then
     perform poi.falla('Marca como representativa al menos una tarea de primer nivel (1, 2, …) en la PM2.');
@@ -375,16 +375,18 @@ begin
    where id_ao = v_id;
 
   insert into poi.pm2_tarea as q (id_tarea, id_ao, centro_costo, codigo, nombre, repr, acum, um, m2027, m2028, m2029,
-                                  total_2027, total_2028, total_2029, estado, origen, actualizado, actualizado_por)
+                                  total_2027, total_2028, total_2029, estado, origen, actualizado, actualizado_por, propio)
   select id, v_id, cc, codigo, nombre, repr, acum, um, m2027, m2028, m2029,
          poi.tot(m2027, acum), poi.tot(m2028, acum), poi.tot(m2029, acum),
-         case when elim then 'ELIMINADA' else 'ACTIVA' end, v_origen, now(), v_user
+         case when elim then 'ELIMINADA' else 'ACTIVA' end, v_origen, now(), v_user,
+         propio and exists (select 1 from _t c where not c.elim and c.padre = _t.codigo)
   from _t
   on conflict (id_tarea) do update set
     codigo = excluded.codigo, nombre = coalesce(nullif(excluded.nombre, ''), q.nombre), repr = excluded.repr, acum = excluded.acum,
     um = excluded.um, m2027 = excluded.m2027, m2028 = excluded.m2028, m2029 = excluded.m2029,
     total_2027 = excluded.total_2027, total_2028 = excluded.total_2028, total_2029 = excluded.total_2029,
-    estado = excluded.estado, origen = excluded.origen, actualizado = excluded.actualizado, actualizado_por = excluded.actualizado_por;
+    estado = excluded.estado, origen = excluded.origen, actualizado = excluded.actualizado, actualizado_por = excluded.actualizado_por,
+    propio = excluded.propio;
 
   insert into poi.pm3_recurso as q (id_rec, id_ao, centro_costo, codigo_tarea, recurso, um, ff, rubro, clasificador, llave, n_prevision,
                                     cant_2027, cant_2028, cant_2029, m2027, m2028, m2029, total_2027, total_2028, total_2029,
