@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>POI Multianual · Portal de áreas</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root{--ink:#14213d;--ink2:#3d4a63;--mut:#6b7689;--line:#dfe3ea;--bg:#f4f5f7;--card:#fff;--acc:#0b5cad;--acc2:#e8f1fb;--ok:#1f7a4d;--okbg:#e6f4ec;--warn:#9a5b00;--warnbg:#fdf3e1;--bad:#b42318;--badbg:#fdecea;--r:10px}
 *{box-sizing:border-box}
@@ -131,6 +131,73 @@ h4{font-size:13px;margin:16px 0 6px;color:var(--ink2)}
 .pm1 td,.pm1 th{font-size:12px}
 .pm2 td.l,.pm2 th.l{min-width:300px;max-width:380px}
 .pm3 td.l,.pm3 th.l{min-width:220px}
+/* Identidad visual: señalética de transporte urbano */
+:root{--ink:#12233D;--ink2:#3A4A64;--mut:#66748A;--line:#DCE3EA;--bg:#F1F4F7;--acc:#0A7EA4;--acc2:#E4F2F7;--ok:#2E8B57;--okbg:#E5F3EB;--warn:#8A5600;--warnbg:#FDF1DC;--amb:#C77F00;--r:12px}
+.num,.mono,.sf,.lst .top b,td input.mi{font-family:'IBM Plex Sans',system-ui,sans-serif;font-variant-numeric:tabular-nums}
+.sf{letter-spacing:.02em}
+h1,h2,.kpi .v,header .t,.login-card h1{font-family:'IBM Plex Sans Condensed','IBM Plex Sans',sans-serif}
+:focus-visible{outline:3px solid #7CC3DD;outline-offset:2px}
+.login-card{border:0;border-top:6px solid var(--acc);box-shadow:0 1px 3px rgba(18,35,61,.10)}
+.login-card h1{font-size:30px;font-weight:600}
+.brand{text-transform:none;letter-spacing:0;font-size:13px}
+header{border-bottom:4px solid var(--acc);padding:14px 24px}
+header .t{font-size:19px;letter-spacing:.01em}
+header select{border-radius:8px;padding:7px 10px}
+header button{border-radius:8px}
+header button:hover{border-color:#fff;background:rgba(255,255,255,.06)}
+nav{padding:0 24px}
+nav button{padding:14px 16px}
+nav button.on{color:var(--acc);border-bottom-width:3px}
+main{padding:24px}
+.kpis{gap:14px;margin-bottom:20px}
+.kpi{border:0;border-top:4px solid #C9D3DE;border-radius:10px;padding:14px 16px 16px;box-shadow:0 1px 0 var(--line)}
+.kpi.k-prio{border-top-color:var(--acc)}
+.kpi.k-nop{border-top-color:var(--amb)}
+.kpi.k-prop{border-top-color:var(--ink)}
+.kpi .l{font-size:12.5px;color:var(--ink2);font-weight:500}
+.kpi .v{font-size:30px;font-weight:600;line-height:1.1;margin-top:8px;letter-spacing:-.01em}
+.kpi .s{margin-top:4px}
+.bar{height:6px;background:#E3E9EF;border-radius:3px}
+.bar i{background:var(--acc);border-radius:3px}
+.panel{border:0;border-radius:14px;padding:20px 22px;box-shadow:0 1px 0 var(--line)}
+.panel h2{font-size:21px;font-weight:600;letter-spacing:-.005em;margin-bottom:4px}
+.panel .sub{max-width:80ch}
+.ao{border:0;box-shadow:0 1px 0 var(--line);border-radius:12px}
+.ao-h{padding:14px 16px}
+.ao-h .id{color:var(--acc)}
+.chip{display:inline-flex;align-items:center;gap:5px}
+.chip::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.btn{border-radius:8px}
+.btn:hover:not(:disabled){filter:brightness(.94)}
+.tw{border-radius:10px}
+th{background:#F6F8FA;color:var(--mut);font-size:11.5px}
+th.l{background:#F6F8FA}
+table.pnl td{padding:10px 8px}
+table.pnl tbody tr:hover td{background:var(--acc2)}
+.pnl-f button.on{background:var(--ink);border-color:var(--ink)}
+.yrs button.on{background:var(--ink);border-color:var(--ink)}
+/* Gráfica: propuesta frente al techo */
+.leg{display:flex;gap:18px;flex-wrap:wrap;font-size:12px;color:var(--ink2);margin:2px 0 6px}
+.leg span{display:inline-flex;align-items:center;gap:6px}
+.leg .sw{width:14px;height:10px;border-radius:3px;display:inline-block}
+.leg .sw.p{background:var(--acc)} .leg .sw.n{background:var(--amb)}
+.leg .sw.t{width:2px;height:14px;border-radius:1px;background:var(--ink)}
+.rl{display:grid;grid-template-columns:190px 1fr;gap:18px;align-items:center;padding:14px 4px;border-top:1px solid var(--line);cursor:pointer;border-radius:8px}
+.rl:hover{background:#F7FAFC}
+.rl-n b{display:block;font-family:'IBM Plex Sans Condensed','IBM Plex Sans',sans-serif;font-size:18px;font-weight:600}
+.rl-n span{font-size:12px;color:var(--mut)}
+.rl-bar{position:relative;height:16px;background:#EEF2F6;border-radius:8px;display:flex}
+.rl-bar i{display:block;height:100%}
+.rl-bar i.p{background:var(--acc);border-radius:8px 0 0 8px}
+.rl-bar i.n{background:var(--amb);border-radius:0 8px 8px 0;margin-left:2px}
+.rl-bar i.p:last-of-type{border-radius:8px}
+.rl-bar .tm{position:absolute;top:-6px;bottom:-6px;width:2px;background:var(--ink);border-radius:1px}
+.rl-bar .tm::after{content:"Techo";position:absolute;top:-17px;left:50%;transform:translateX(-50%);font-size:10.5px;color:var(--ink2);white-space:nowrap}
+.rl-v{display:flex;gap:18px;flex-wrap:wrap;font-size:12.5px;margin-top:8px;color:var(--ink2);font-variant-numeric:tabular-nums}
+.rl-v b{font-weight:600;color:var(--ink)}
+.rl-v .n b{color:var(--warn)}
+@media(max-width:640px){.rl{grid-template-columns:1fr;gap:8px}.kpi .v{font-size:24px}}
+@media(prefers-reduced-motion:no-preference){.rl-bar i{transition:width .5s ease}}
 </style>
 </head>
 <body>
@@ -357,15 +424,25 @@ function pintarPanel() {
   $('kpis').innerHTML =
     '<div class="kpi"><div class="l">Centros de costo con carga</div><div class="v">' + T.ccCar + ' de ' + rows.length + '</div><div class="bar"><i style="width:' + pct(T.ccCar, rows.length) + '%"></i></div></div>' +
     '<div class="kpi"><div class="l">Actividades cargadas</div><div class="v">' + T.car + ' de ' + T.aos + '</div><div class="s">' + T.comp + ' completas</div></div>' +
-    '<div class="kpi"><div class="l">Propuesta de las áreas ' + YS[0] + '</div><div class="v num">S/ ' + fmt(T.prog + T.dem) + '</div><div class="s">Lo que pidieron las áreas cargadas</div></div>' +
-    '<div class="kpi"><div class="l">Priorizado ' + YS[0] + ' (techo APM)</div><div class="v num">S/ ' + fmt(T.prog) + '</div><div class="s">' + pctTxt(T.prog, T.apm) + ' del techo (S/ ' + fmt(T.apm) + ')</div><div class="bar"><i style="width:' + pct(T.prog, T.apm) + '%"></i></div></div>' +
-    '<div class="kpi"><div class="l">No priorizado ' + YS[0] + '</div><div class="v num">S/ ' + fmt(T.dem) + '</div><div class="s">Propuesta fuera del techo</div></div>' +
+    '<div class="kpi k-prop"><div class="l">Propuesta de las áreas ' + YS[0] + '</div><div class="v num">S/ ' + fmt(T.prog + T.dem) + '</div><div class="s">Lo que pidieron las áreas cargadas</div></div>' +
+    '<div class="kpi k-prio"><div class="l">Priorizado ' + YS[0] + ' (techo APM)</div><div class="v num">S/ ' + fmt(T.prog) + '</div><div class="s">' + pctTxt(T.prog, T.apm) + ' del techo (S/ ' + fmt(T.apm) + ')</div><div class="bar"><i style="width:' + pct(T.prog, T.apm) + '%"></i></div></div>' +
+    '<div class="kpi k-nop"><div class="l">No priorizado ' + YS[0] + '</div><div class="v num">S/ ' + fmt(T.dem) + '</div><div class="s">Propuesta fuera del techo</div></div>' +
     '<div class="kpi"><div class="l">NMP por revisar</div><div class="v">' + T.nmp + '</div><div class="s">' + (T.nmp ? 'Ver pestaña Modificaciones' : 'Sin pendientes') + '</div></div>';
   S.pf = S.pf || 'todos'; S.pq = S.pq || '';
   var etq = { sin: '<span class="chip warn">Sin carga</span>', proc: '<span class="chip info">En proceso</span>', ok: '<span class="chip ok">Completo</span>' };
   var cnt = { todos: rows.length, sin: 0, proc: 0, ok: 0 }; rows.forEach(function (r) { cnt[estPanel(r)]++; });
   var q = norm(S.pq), vis = rows.filter(function (r) { return (S.pf === 'todos' || estPanel(r) === S.pf) && (!q || norm(r.cc + ' ' + r.uo).indexOf(q) >= 0); });
-  $('aoList').innerHTML = '<div class="panel"><h2>Panel de control · POI ' + YS[0] + '–' + YS[2] + '</h2><p class="sub">Avance de la programación por centro de costo. Haz clic en una fila para abrir sus actividades.</p>' +
+  var car = rows.filter(function (r) { return r.cargadas > 0; }).sort(function (a, b) { return (+b.prog_a1 + +b.demanda_a1) - (+a.prog_a1 + +a.demanda_a1); });
+  var graf = !car.length ? '' : '<div class="panel"><h2>Propuesta frente al techo · ' + YS[0] + '</h2><p class="sub">Solo actividades ya cargadas. El tramo azul es lo priorizado dentro del techo APM; el ámbar, lo que la propuesta pide por encima. La marca vertical es el techo.</p>' +
+    '<div class="leg"><span><i class="sw p"></i>Priorizado</span><span><i class="sw n"></i>No priorizado</span><span><i class="sw t"></i>Techo APM</span></div>' +
+    car.map(function (r) {
+      var pr = +r.prog_a1, dm = +r.demanda_a1, te = +(r.apm_carg_a1 || r.apm_a1), S = Math.max(te, pr + dm) || 1;
+      var w = function (x) { return (x / S * 100).toFixed(2) + '%'; };
+      return '<div class="rl" data-cc="' + esc(r.cc) + '" title="' + esc(r.cc + ': priorizado S/ ' + fmt(pr) + ' · no priorizado S/ ' + fmt(dm) + ' · techo S/ ' + fmt(te)) + '"><div class="rl-n"><b>' + esc(r.cc) + '</b><span>' + r.cargadas + ' de ' + r.aos + ' actividades cargadas</span></div>' +
+        '<div><div class="rl-bar"><i class="p" style="width:' + w(pr) + '"></i>' + (dm ? '<i class="n" style="width:' + w(dm) + '"></i>' : '') + '<span class="tm" style="left:calc(' + w(te) + ' - 1px)"></span></div>' +
+        '<div class="rl-v"><span>Priorizado <b>S/ ' + fmt(pr) + '</b> de S/ ' + fmt(te) + '</span>' + (dm ? '<span class="n">No priorizado <b>S/ ' + fmt(dm) + '</b></span>' : '') + '<span>Propuesta S/ ' + fmt(pr + dm) + '</span></div></div></div>';
+    }).join('') + '</div>';
+  $('aoList').innerHTML = graf + '<div class="panel"><h2>Panel de control · POI ' + YS[0] + '–' + YS[2] + '</h2><p class="sub">Avance de la programación por centro de costo. Haz clic en una fila para abrir sus actividades.</p>' +
     '<div class="pnl-f">' + [['todos', 'Todos'], ['sin', 'Sin carga'], ['proc', 'En proceso'], ['ok', 'Completos']].map(function (f) { return '<button type="button" data-f="' + f[0] + '" class="' + (S.pf === f[0] ? 'on' : '') + '">' + f[1] + ' (' + cnt[f[0]] + ')</button>'; }).join('') +
     '<input id="pnlQ" placeholder="Buscar centro de costo o unidad" value="' + esc(S.pq) + '"></div>' +
     '<div class="tw"><table class="pnl"><thead><tr><th class="l">Centro de costo</th><th>Actividades<br>cargadas</th><th>Completas</th><th>Propuesta<br>' + YS[0] + ' (S/)</th><th>Techo APM<br>' + YS[0] + ' (S/)</th><th>Priorizado<br>' + YS[0] + ' (S/)</th><th>Avance</th><th>No priorizado<br>' + YS[0] + ' (S/)</th><th>Última carga</th><th>Estado</th></tr></thead><tbody>' +
@@ -398,6 +475,7 @@ function pintarPanel() {
   };
   $('aoList').querySelectorAll('.pnl-f button').forEach(function (b) { b.onclick = function () { S.pf = b.dataset.f; pintarPanel(); }; });
   var qi = $('pnlQ'); qi.oninput = function () { S.pq = qi.value; var pos = qi.selectionStart; pintarPanel(); var n = $('pnlQ'); n.focus(); n.setSelectionRange(pos, pos); };
+  $('aoList').querySelectorAll('.rl[data-cc]').forEach(function (d) { d.onclick = function () { S.cc = d.dataset.cc; cargar(); }; });
   $('aoList').querySelectorAll('tr[data-cc]').forEach(function (tr) { tr.onclick = function () { S.cc = tr.dataset.cc; cargar(); }; });
 }
 function pintarProg() {

@@ -444,13 +444,13 @@ language sql stable as $$
   nmp as (select centro_costo, count(distinct numero) n from poi.nmp where estado like 'EN REVISI%' and periodo = per group by centro_costo)
   select coalesce(jsonb_agg(jsonb_build_object(
            'cc', x.centro_costo, 'uo', x.uo, 'aos', x.aos, 'cargadas', x.cargadas, 'completas', x.completas,
-           'apm_a1', x.apm1, 'prog_a1', x.prog1, 'demanda_a1', coalesce(dem.d1, 0),
+           'apm_a1', x.apm1, 'apm_carg_a1', x.apm_carg1, 'prog_a1', x.prog1, 'demanda_a1', coalesce(dem.d1, 0),
            'nmp_pendientes', coalesce(nmp.n, 0), 'actualizado', to_char(x.ult at time zone 'America/Lima', 'DD/MM/YYYY HH24:MI')
          ) order by x.centro_costo), '[]')
     from (select centro_costo, min(unidad_organica) uo, count(*) aos,
                  count(*) filter (where cargada) cargadas,
                  count(*) filter (where cargada and ficha and fisica and cuadra) completas,
-                 sum(apm1) apm1, sum(prog1) prog1, max(actualizado) ult
+                 sum(apm1) apm1, sum(apm1) filter (where cargada) apm_carg1, sum(prog1) prog1, max(actualizado) ult
             from aoc group by centro_costo) x
     left join dem on dem.centro_costo = x.centro_costo
     left join nmp on nmp.centro_costo = x.centro_costo
