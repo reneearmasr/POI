@@ -301,14 +301,14 @@ function progAo(id, y) { return r2(recursosDe(id).reduce(function (s, r) { retur
 
 function estadoAo(a) {
   var ficha = !!(a.descripcion && a.indicador && a.medio);
-  var fisica = YS.every(function (y) { return r2(reprAnio(a.id_ao, y)) === r2(a['meta_' + y]) && reprAnio(a.id_ao, y) > 0; });
+  var fisica = YS.every(function (y) { return reprAnio(a.id_ao, y) > 0; });
   var cuadra = partidasDe(a.id_ao).every(function (p) { return YS.every(function (y) { return progPartida(a.id_ao, p.llave, y) === apmP(p, y); }); });
   return { ok: ficha && fisica && cuadra, ficha: ficha, fisica: fisica, cuadra: cuadra };
 }
 function chipAo(a) {
   var e = estadoAo(a);
   if (e.ok) return '<span class="chip ok">Completa</span>';
-  var f = []; if (!e.ficha) f.push('PM1'); if (!e.fisica) { var yf = YS.find(function (y) { return r2(reprAnio(a.id_ao, y)) !== r2(a['meta_' + y]) || !reprAnio(a.id_ao, y); }) || '2027'; f.push('PM2 (' + yf + ': ' + fmt2(reprAnio(a.id_ao, yf)) + ' de ' + fmt2(a['meta_' + yf]) + ')'); } if (!e.cuadra) f.push('PM3');
+  var f = []; if (!e.ficha) f.push('PM1'); if (!e.fisica) { var yf = YS.find(function (y) { return !reprAnio(a.id_ao, y); }) || '2027'; f.push('PM2 (sin meta ' + yf + ')'); } if (!e.cuadra) f.push('PM3');
   return f.length === 3 ? '<span class="chip warn">Pendiente</span>' : '<span class="chip info">Falta ' + f.join(', ') + '</span>';
 }
 
@@ -341,11 +341,12 @@ function htmlAo(a) {
     '<div class="grid2"><div><label>Descripción de la intervención</label><textarea class="inp f-desc">' + esc(a.descripcion) + '</textarea></div>' +
     '<div><label>Beneficiarios</label><textarea class="inp f-ben">' + esc(a.beneficiarios) + '</textarea></div>' +
     '<div><label>Indicador</label><textarea class="inp f-ind">' + esc(a.indicador) + '</textarea></div>' +
-    '<div><label>Medio de verificación</label><textarea class="inp f-med">' + esc(a.medio) + '</textarea></div></div>' +
-    '<div class="tw" style="margin-top:12px"><table class="pm1"><thead><tr><th class="l">Año</th><th>Meta física programada (PM2)</th><th>Meta física APM</th><th>Programación financiera (PM3)</th><th>APM (S/)</th><th>Diferencia (S/)</th></tr></thead><tbody></tbody></table></div>' +
+    '<div><label>Medio de verificación</label><textarea class="inp f-med">' + esc(a.medio) + '</textarea></div>' +
+    '<div><label>Unidad de medida de la actividad</label><input class="inp f-um" value="' + esc(a.unidad_medida) + '"></div></div>' +
+    '<div class="tw" style="margin-top:12px"><table class="pm1"><thead><tr><th class="l">Año</th><th>Meta física (PM2)</th><th>Programación financiera (PM3)</th><th>APM (S/)</th><th>Diferencia (S/)</th></tr></thead><tbody></tbody></table></div>' +
     '<div class="yrs" role="tablist">' + YS.map(function (y) { return '<button type="button" data-y="' + y + '" class="' + (S.anio[a.id_ao] === y ? 'on' : '') + '">' + y + '</button>'; }).join('') + '</div>' +
     '<h3>PM2 · Programación física <span class="ylab"></span></h3>' +
-    '<p class="hint">Las tareas con subtareas suman automáticamente a sus hijas. Las tareas de primer nivel marcadas <b>Repr.</b> deben sumar la meta física APM del año. <b>Acum.</b>: el total anual es la suma de los meses; si no, el mayor valor mensual.</p>' +
+    '<p class="hint">La meta física la define el área: es la suma de las tareas de primer nivel marcadas <b>Repr.</b> (la APM solo limita el presupuesto). Las tareas padre suman sus subtareas, salvo que tengan valor propio (<b>✎ propio</b>). <b>Acum.</b>: el total anual es la suma de los meses; si no, el mayor valor mensual.</p>' +
     '<div class="tw"><table class="pm2"><thead></thead><tbody></tbody></table></div>' +
     '<div class="acts" style="margin-top:8px"><button class="btn sec sm addT" type="button">+ Tarea</button></div>' +
     '<h3>PM3 · Programación financiera <span class="ylab"></span></h3>' +
@@ -387,7 +388,7 @@ function resumen(a) {
   var box = $('ao-' + a.id_ao), y = S.anio[a.id_ao], id = a.id_ao;
   box.querySelector('.pm1 tbody').innerHTML = YS.map(function (yy) {
     var f = reprAnio(id, yy), mf = r2(a['meta_' + yy]), p = progAo(id, yy), ap = apmA(a, yy), d = r2(ap - p);
-    return '<tr><td class="l">' + yy + '</td><td class="num ' + (f === mf ? 'd0' : 'dn') + '">' + fmt2(f) + ' ' + esc(a.unidad_medida) + '</td><td class="num">' + fmt2(mf) + '</td><td class="num">' + fmt2(p) + '</td><td class="num">' + fmt2(ap) + '</td><td class="num ' + (d === 0 ? 'd0' : 'dn') + '">' + fmt2(d) + '</td></tr>';
+    return '<tr><td class="l">' + yy + '</td><td class="num">' + fmt2(f) + ' ' + esc(a.unidad_medida) + '</td><td class="num">' + fmt2(p) + '</td><td class="num">' + fmt2(ap) + '</td><td class="num ' + (d === 0 ? 'd0' : 'dn') + '">' + fmt2(d) + '</td></tr>';
   }).join('');
   box.querySelector('.cq tbody').innerHTML = partidasDe(id).map(function (p) {
     var ap = apmP(p, y), pr = progPartida(id, p.llave, y), d = r2(ap - pr);
@@ -476,7 +477,7 @@ function payloadAo(a, origen) {
   var box = $('ao-' + a.id_ao), id = a.id_ao;
   return {
     id_ao: id, origen: origen,
-    pa1: { nombre_ao: box.querySelector('.f-nombre').value, descripcion: box.querySelector('.f-desc').value, beneficiarios: box.querySelector('.f-ben').value, indicador: box.querySelector('.f-ind').value, medio: box.querySelector('.f-med').value },
+    pa1: { nombre_ao: box.querySelector('.f-nombre').value, descripcion: box.querySelector('.f-desc').value, beneficiarios: box.querySelector('.f-ben').value, indicador: box.querySelector('.f-ind').value, medio: box.querySelector('.f-med').value, unidad_medida: box.querySelector('.f-um').value },
     pm2: S.data.tareas.filter(function (t) { return t.id_ao === id && (t.id || !t.eliminar); }).map(function (t) { return { id: t.id, codigo: t.codigo, nombre: t.nombre, repr: t.repr, acum: t.acum, um: t.um, y: t.y, eliminar: !!t.eliminar, propio: !!t.propio }; }),
     pm3: S.data.recursos.filter(function (r) { return r.id_ao === id && (r.id || !r.eliminar); }).map(function (r) { return { id: r.id, tarea: r.tarea, nombre: r.nombre, um: r.um, llave: r.llave, prev: r.prev, cant: r.cant, y: r.y, eliminar: !!r.eliminar, demanda: !!r.demanda, ff: r.ff || '', clasificador: r.clasificador || '' }; })
   };
@@ -489,7 +490,7 @@ function guardarAo(a, origen, alTerminar) {
   return api('guardarAO', payload).then(function (j) {
     btn.disabled = false;
     if (!j.ok) { msg.className = 'msg bad'; msg.textContent = j.error || 'No se pudo guardar.'; if (alTerminar) alTerminar(false, j.error); return; }
-    a.nombre_ao = payload.pa1.nombre_ao; a.descripcion = payload.pa1.descripcion; a.beneficiarios = payload.pa1.beneficiarios; a.indicador = payload.pa1.indicador; a.medio = payload.pa1.medio;
+    a.nombre_ao = payload.pa1.nombre_ao; a.descripcion = payload.pa1.descripcion; a.beneficiarios = payload.pa1.beneficiarios; a.indicador = payload.pa1.indicador; a.medio = payload.pa1.medio; a.unidad_medida = payload.pa1.unidad_medida || a.unidad_medida; YS.forEach(function (yy) { a['meta_' + yy] = reprAnio(a.id_ao, yy); });
     var hora = new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
     return api('datos').then(function (d) {
       if (d.ok) {
@@ -532,6 +533,7 @@ function leerPM(wb) {
   c = buscar(p1, function (s) { return s.indexOf('descripcion de la intervencion') === 0; }); out.pm1.descripcion = c ? abajo(p1, c[0]) : '';
   c = buscar(p1, function (s) { return s === 'beneficiarios'; }); out.pm1.beneficiarios = c ? abajo(p1, c[0]) : '';
   c = buscar(p1, function (s) { return s === 'indicador'; }); out.pm1.indicador = c ? derecha(p1, c[0], c[1]) : '';
+  c = buscar(p1, function (s) { return s === 'unidad de medida'; }); out.pm1.unidad_medida = c ? derecha(p1, c[0], c[1]) : '';
   c = buscar(p1, function (s) { return s.indexOf('medio de verificacion') === 0; }); out.pm1.medio = c ? derecha(p1, c[0], c[1]) : '';
   c = buscar(p1, function (s) { return s === 'centro de costo'; }); out.centro = c ? derecha(p1, c[0], c[1]) : '';
   var h = buscar(p2, function (s) { return s.indexOf('actividad / tarea') === 0; });
@@ -632,9 +634,9 @@ function aplicarImport(x, a) {
   libresT.forEach(function (i) { S.data.tareas.push({ k: 'n' + (++S.seq), id: i, id_ao: id, codigo: '0', nombre: '', repr: false, acum: false, um: '', y: nuevoY(), eliminar: true }); });
   libresR.forEach(function (i) { S.data.recursos.push({ k: 'n' + (++S.seq), id: i, id_ao: id, tarea: '', nombre: '', um: '', llave: '', prev: '', cant: {}, y: nuevoY(), eliminar: true }); });
   var box = $('ao-' + id);
-  ['nombre_ao', 'descripcion', 'beneficiarios', 'indicador', 'medio'].forEach(function (k) { var v = x.pm1[k]; if (v) a[k] = v; });
+  ['nombre_ao', 'descripcion', 'beneficiarios', 'indicador', 'medio', 'unidad_medida'].forEach(function (k) { var v = x.pm1[k]; if (v) a[k] = v; });
   box.querySelector('.ao-b').classList.remove('hidden'); pintarAo(a);
-  ['nombre_ao', 'descripcion', 'beneficiarios', 'indicador', 'medio'].forEach(function (k, i) { var el = box.querySelector(['.f-nombre', '.f-desc', '.f-ben', '.f-ind', '.f-med'][i]); if (el && a[k]) el.value = a[k]; });
+  ['nombre_ao', 'descripcion', 'beneficiarios', 'indicador', 'medio', 'unidad_medida'].forEach(function (k, i) { var el = box.querySelector(['.f-nombre', '.f-desc', '.f-ben', '.f-ind', '.f-med', '.f-um'][i]); if (el && a[k]) el.value = a[k]; });
   $('impRes').className = 'msg'; $('impRes').textContent = 'Guardando…';
   guardarAo(a, 'Importado', function (ok, err) { $('impRes').className = 'msg ' + (ok ? 'ok' : 'bad'); $('impRes').textContent = ok ? 'Importado en ' + id + '. Revisa los avisos de cuadre en la actividad.' : (err || 'No se pudo importar.'); });
 }

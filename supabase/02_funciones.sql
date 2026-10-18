@@ -292,13 +292,12 @@ begin
   if not exists (select 1 from _t where not elim and repr and prof = 1) then
     perform poi.falla('Marca como representativa al menos una tarea de primer nivel (1, 2, …) en la PM2.');
   end if;
+  -- La meta física la define el área (tareas representativas de primer nivel); la APM solo limita el presupuesto
   foreach yy in array array['2027', '2028', '2029'] loop
-    meta := case yy when '2027' then a.meta_2027 when '2028' then a.meta_2028 else a.meta_2029 end;
     select round(coalesce(sum(poi.tot(case yy when '2027' then m2027 when '2028' then m2028 else m2029 end, acum)), 0), 2)
       into tot from _t where not elim and repr and prof = 1;
-    if round(coalesce(meta, 0), 2) <> tot then
-      avisos := avisos || ('PM2 ' || yy || ': las tareas representativas suman ' || poi.fmt(tot) || ' y la meta física APM es ' || poi.fmt(meta) || '.');
-    end if;
+    if tot = 0 then avisos := avisos || ('PM2 ' || yy || ': la actividad no tiene meta física programada.'); end if;
+    if yy = '2027' then a.meta_2027 := tot; elsif yy = '2028' then a.meta_2028 := tot; else a.meta_2029 := tot; end if;
   end loop;
 
   -- ===== PM3 =====
@@ -371,7 +370,10 @@ begin
   -- ===== Escritura =====
   update poi.ao set nombre_ao = poi.t(p1 ->> 'nombre_ao'), descripcion = poi.t(p1 ->> 'descripcion'),
          beneficiarios = poi.t(p1 ->> 'beneficiarios'), indicador = poi.t(p1 ->> 'indicador'),
-         medio_verificacion = poi.t(p1 ->> 'medio'), actualizado = now(), actualizado_por = v_user
+         medio_verificacion = poi.t(p1 ->> 'medio'),
+         unidad_medida = coalesce(nullif(poi.t(p1 ->> 'unidad_medida', 100), ''), unidad_medida),
+         meta_2027 = a.meta_2027, meta_2028 = a.meta_2028, meta_2029 = a.meta_2029,
+         actualizado = now(), actualizado_por = v_user
    where id_ao = v_id;
 
   insert into poi.pm2_tarea as q (id_tarea, id_ao, centro_costo, codigo, nombre, repr, acum, um, m2027, m2028, m2029,
