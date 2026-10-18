@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>POI 2027 · Portal de áreas</title>
+<title>POI Multianual · Portal de áreas</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -137,7 +137,7 @@ h4{font-size:13px;margin:16px 0 6px;color:var(--ink2)}
 <section id="login">
   <form class="login-card" id="fLogin">
     <div class="brand">ATU · Planeamiento y Presupuesto</div>
-    <h1>POI 2027</h1>
+    <h1>POI Multianual</h1>
     <p>Portal de programación y modificaciones de las áreas usuarias.</p>
     <label for="lu">Usuario</label>
     <input class="inp" id="lu" autocomplete="username" required>
@@ -150,9 +150,10 @@ h4{font-size:13px;margin:16px 0 6px;color:var(--ink2)}
 
 <section id="app" class="hidden">
   <header>
-    <span class="t">POI 2027 · ATU</span>
+    <span class="t" id="hTit">POI · ATU</span>
     <span class="area" id="hArea"></span>
     <span class="sp"></span>
+    <select id="selPer" class="hidden" aria-label="Periodo"></select>
     <select id="selCc" class="hidden" aria-label="Centro de costo"></select>
     <button id="bExp" class="hidden" type="button">Descargar Excel</button>
     <button id="bClave" type="button">Contraseña</button>
@@ -165,7 +166,7 @@ h4{font-size:13px;margin:16px 0 6px;color:var(--ink2)}
   <main>
     <div id="tProg">
       <div class="kpis" id="kpis"></div>
-      <p class="hint">Programación multianual 2027–2029 ajustada a la APM: ficha de la actividad (PM1), metas físicas por tarea (PM2) y recursos por partida (PM3). Lo que la propuesta del área no alcanza dentro del techo APM queda como <b>propuesta no priorizada</b>: no se pierde y sirve para la consistencia con el PIA.</p>
+      <p class="hint">Programación multianual (tres años) ajustada a la APM: ficha de la actividad (PM1), metas físicas por tarea (PM2) y recursos por partida (PM3). Lo que la propuesta del área no alcanza dentro del techo APM queda como <b>propuesta no priorizada</b>: no se pierde y sirve para la consistencia con el PIA.</p>
       <div id="aoList"></div>
     </div>
     <div id="tNmp" class="hidden">
@@ -234,7 +235,7 @@ function cabeceras() {
   return h;
 }
 function api(accion, extra) {
-  var b = Object.assign({ accion: accion, token: S.token, cc: S.cc }, extra || {});
+  var b = Object.assign({ accion: accion, token: S.token, cc: S.cc, periodo: S.per || '' }, extra || {});
   if (!CFG.url || !CFG.key) return Promise.resolve({ ok: false, error: 'Falta configurar la conexión con la base de datos (config.js).' });
   return fetch(API, { method: 'POST', headers: cabeceras(), body: JSON.stringify({ p: b }) })
     .then(function (r) {
@@ -261,6 +262,14 @@ $('fLogin').addEventListener('submit', function (ev) {
 });
 $('bOut').onclick = function () { salir(''); };
 $('selCc').onchange = function () { S.cc = this.value; cargar(); };
+$('selPer').onchange = function () { S.per = +this.value; S.anio = {}; cargar(); };
+function soloLectura() {
+  var ro = S.periodo && S.periodo.estado === 'CERRADO', bn = $('roBan');
+  if (!bn) { bn = document.createElement('div'); bn.id = 'roBan'; bn.className = 'panel'; bn.style.cssText = 'background:var(--warnbg);border-color:var(--warn);color:var(--warn);font-weight:500'; $('app').querySelector('main').insertBefore(bn, $('app').querySelector('main').firstChild); }
+  bn.classList.toggle('hidden', !ro);
+  bn.textContent = ro ? 'Periodo ' + YS[0] + '–' + YS[2] + ' cerrado: solo consulta. Para programar, elige el periodo vigente arriba.' : '';
+  if (ro) document.querySelectorAll('.bSave, #bSendNmp, #bAddRow, #fImp, #bVer, #bPer').forEach(function (b) { b.disabled = true; });
+}
 document.querySelectorAll('nav button').forEach(function (b) {
   b.onclick = function () {
     document.querySelectorAll('nav button').forEach(function (x) { x.classList.toggle('on', x === b); });
@@ -277,13 +286,19 @@ function cargar() {
     (S.data.tareas = S.data.tareas || []).forEach(function (t) { t.k = 's' + (++S.seq); }); (S.data.recursos = S.data.recursos || []).forEach(function (r) { r.k = 's' + (++S.seq); });
     $('login').classList.add('hidden'); $('app').classList.remove('hidden');
     $('hArea').textContent = j.sesion.rol === 'OPP' ? 'OPP · ' + (j.sesion.cc || 'Panel general') : j.sesion.cc + ' · ' + j.sesion.nombre;
+    if (j.anios) YS = j.anios;
+    S.periodo = j.periodo || { anio_ini: +YS[0], estado: 'ACTIVO' }; S.per = S.periodo.anio_ini;
+    $('hTit').textContent = 'POI ' + YS[0] + '–' + YS[2] + ' · ATU';
+    var sp = $('selPer'), pers = j.periodos || [];
+    sp.classList.toggle('hidden', pers.length < 2);
+    sp.innerHTML = pers.map(function (p) { return '<option value="' + p.anio_ini + '"' + (p.anio_ini === S.per ? ' selected' : '') + '>' + esc(p.anio_ini + '–' + (p.anio_ini + 2)) + (p.estado === 'CERRADO' ? ' (cerrado)' : '') + '</option>'; }).join('');
     var sel = $('selCc');
     if (j.sesion.rol === 'OPP') {
       sel.classList.remove('hidden');
       sel.innerHTML = '<option value="">Panel general</option>' + j.centros.map(function (c) { return '<option' + (c === S.cc ? ' selected' : '') + '>' + esc(c) + '</option>'; }).join('');
     }
     $('bExp').classList.toggle('hidden', j.sesion.rol !== 'OPP');
-    pintarProg(); pintarNmp(); pintarBandeja();
+    pintarProg(); pintarNmp(); pintarBandeja(); soloLectura();
   }).catch(function () { loading(false); });
 }
 
@@ -291,7 +306,7 @@ var YS = ['2027', '2028', '2029'];
 var fmt2 = function (n) { return Number(n || 0).toLocaleString('es-PE', { minimumFractionDigits: 0, maximumFractionDigits: 2 }); };
 var r2 = function (n) { return Math.round((Number(n) || 0) * 100) / 100; };
 var ceros = function () { return [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; };
-var nuevoY = function () { return { '2027': ceros(), '2028': ceros(), '2029': ceros() }; };
+var nuevoY = function () { var o = {}; YS.forEach(function (y) { o[y] = ceros(); }); return o; };
 S.anio = {};
 function aoDe(id) { return S.data.aos.find(function (a) { return a.id_ao === id; }); }
 function tareasDe(id) { return S.data.tareas.filter(function (t) { return t.id_ao === id && !t.eliminar; }).sort(function (a, b) { return cmpCod(a.codigo, b.codigo); }); }
@@ -319,7 +334,7 @@ function estadoAo(a) {
 function chipAo(a) {
   var e = estadoAo(a);
   if (e.ok) return '<span class="chip ok">Completa</span>';
-  var f = []; if (!e.ficha) f.push('PM1'); if (!e.fisica) { var yf = YS.find(function (y) { return !reprAnio(a.id_ao, y); }) || '2027'; f.push('PM2 (sin meta ' + yf + ')'); } if (!e.cuadra) f.push('PM3');
+  var f = []; if (!e.ficha) f.push('PM1'); if (!e.fisica) { var yf = YS.find(function (y) { return !reprAnio(a.id_ao, y); }) || YS[0]; f.push('PM2 (sin meta ' + yf + ')'); } if (!e.cuadra) f.push('PM3');
   return f.length === 3 ? '<span class="chip warn">Pendiente</span>' : '<span class="chip info">Falta ' + f.join(', ') + '</span>';
 }
 
@@ -329,39 +344,51 @@ function pintarKpis() {
   var pct = apm ? Math.min(100, Math.round(prog / apm * 100)) : 0;
   $('kpis').innerHTML = !d.aos.length ? '' :
     '<div class="kpi"><div class="l">Actividades operativas</div><div class="v">' + d.aos.length + '</div></div>' +
-    '<div class="kpi"><div class="l">APM 2027–2029</div><div class="v num">S/ ' + fmt(apm) + '</div></div>' +
+    '<div class="kpi"><div class="l">APM ' + YS[0] + '–' + YS[2] + '</div><div class="v num">S/ ' + fmt(apm) + '</div></div>' +
     '<div class="kpi"><div class="l">Programado por meses (PM3)</div><div class="v num">S/ ' + fmt(prog) + '</div><div class="bar"><i style="width:' + pct + '%"></i></div></div>' +
     '<div class="kpi"><div class="l">Actividades completas</div><div class="v">' + comp + ' de ' + d.aos.length + '</div></div>';
 }
 function estPanel(r) { return !r.cargadas ? 'sin' : (r.completas === r.aos ? 'ok' : 'proc'); }
 function pintarPanel() {
   var rows = S.data.panel || [], T = { aos: 0, car: 0, comp: 0, apm: 0, prog: 0, dem: 0, nmp: 0, ccCar: 0 };
-  rows.forEach(function (r) { T.aos += r.aos; T.car += r.cargadas; T.comp += r.completas; T.apm += +r.apm_2027; T.prog += +r.prog_2027; T.dem += +r.demanda_2027; T.nmp += r.nmp_pendientes; if (r.cargadas) T.ccCar++; });
+  rows.forEach(function (r) { T.aos += r.aos; T.car += r.cargadas; T.comp += r.completas; T.apm += +r.apm_a1; T.prog += +r.prog_a1; T.dem += +r.demanda_a1; T.nmp += r.nmp_pendientes; if (r.cargadas) T.ccCar++; });
   var pct = function (a, b) { return b ? Math.min(100, Math.round(a / b * 100)) : 0; };
   var pctTxt = function (a, b) { var v = b ? a / b * 100 : 0; return v > 0 && v < 1 ? '<1%' : Math.min(100, Math.round(v)) + '%'; };
   $('kpis').innerHTML =
     '<div class="kpi"><div class="l">Centros de costo con carga</div><div class="v">' + T.ccCar + ' de ' + rows.length + '</div><div class="bar"><i style="width:' + pct(T.ccCar, rows.length) + '%"></i></div></div>' +
     '<div class="kpi"><div class="l">Actividades cargadas</div><div class="v">' + T.car + ' de ' + T.aos + '</div><div class="s">' + T.comp + ' completas</div></div>' +
-    '<div class="kpi"><div class="l">Propuesta de las áreas 2027</div><div class="v num">S/ ' + fmt(T.prog + T.dem) + '</div><div class="s">Lo que pidieron las áreas cargadas</div></div>' +
-    '<div class="kpi"><div class="l">Priorizado 2027 (techo APM)</div><div class="v num">S/ ' + fmt(T.prog) + '</div><div class="s">' + pctTxt(T.prog, T.apm) + ' del techo (S/ ' + fmt(T.apm) + ')</div><div class="bar"><i style="width:' + pct(T.prog, T.apm) + '%"></i></div></div>' +
-    '<div class="kpi"><div class="l">No priorizado 2027</div><div class="v num">S/ ' + fmt(T.dem) + '</div><div class="s">Propuesta fuera del techo</div></div>' +
+    '<div class="kpi"><div class="l">Propuesta de las áreas ' + YS[0] + '</div><div class="v num">S/ ' + fmt(T.prog + T.dem) + '</div><div class="s">Lo que pidieron las áreas cargadas</div></div>' +
+    '<div class="kpi"><div class="l">Priorizado ' + YS[0] + ' (techo APM)</div><div class="v num">S/ ' + fmt(T.prog) + '</div><div class="s">' + pctTxt(T.prog, T.apm) + ' del techo (S/ ' + fmt(T.apm) + ')</div><div class="bar"><i style="width:' + pct(T.prog, T.apm) + '%"></i></div></div>' +
+    '<div class="kpi"><div class="l">No priorizado ' + YS[0] + '</div><div class="v num">S/ ' + fmt(T.dem) + '</div><div class="s">Propuesta fuera del techo</div></div>' +
     '<div class="kpi"><div class="l">NMP por revisar</div><div class="v">' + T.nmp + '</div><div class="s">' + (T.nmp ? 'Ver pestaña Modificaciones' : 'Sin pendientes') + '</div></div>';
   S.pf = S.pf || 'todos'; S.pq = S.pq || '';
   var etq = { sin: '<span class="chip warn">Sin carga</span>', proc: '<span class="chip info">En proceso</span>', ok: '<span class="chip ok">Completo</span>' };
   var cnt = { todos: rows.length, sin: 0, proc: 0, ok: 0 }; rows.forEach(function (r) { cnt[estPanel(r)]++; });
   var q = norm(S.pq), vis = rows.filter(function (r) { return (S.pf === 'todos' || estPanel(r) === S.pf) && (!q || norm(r.cc + ' ' + r.uo).indexOf(q) >= 0); });
-  $('aoList').innerHTML = '<div class="panel"><h2>Panel de control · POI 2027</h2><p class="sub">Avance de la programación por centro de costo. Haz clic en una fila para abrir sus actividades.</p>' +
+  $('aoList').innerHTML = '<div class="panel"><h2>Panel de control · POI ' + YS[0] + '–' + YS[2] + '</h2><p class="sub">Avance de la programación por centro de costo. Haz clic en una fila para abrir sus actividades.</p>' +
     '<div class="pnl-f">' + [['todos', 'Todos'], ['sin', 'Sin carga'], ['proc', 'En proceso'], ['ok', 'Completos']].map(function (f) { return '<button type="button" data-f="' + f[0] + '" class="' + (S.pf === f[0] ? 'on' : '') + '">' + f[1] + ' (' + cnt[f[0]] + ')</button>'; }).join('') +
     '<input id="pnlQ" placeholder="Buscar centro de costo o unidad" value="' + esc(S.pq) + '"></div>' +
-    '<div class="tw"><table class="pnl"><thead><tr><th class="l">Centro de costo</th><th>Actividades<br>cargadas</th><th>Completas</th><th>Propuesta<br>2027 (S/)</th><th>Techo APM<br>2027 (S/)</th><th>Priorizado<br>2027 (S/)</th><th>Avance</th><th>No priorizado<br>2027 (S/)</th><th>Última carga</th><th>Estado</th></tr></thead><tbody>' +
-    (vis.length ? vis.map(function (r) { var p = pct(+r.prog_2027, +r.apm_2027); return '<tr data-cc="' + esc(r.cc) + '"><td class="l"><b>' + esc(r.cc) + '</b><div class="uo">' + esc(r.uo) + '</div></td><td class="num">' + r.cargadas + ' de ' + r.aos + '</td><td class="num">' + r.completas + '</td><td class="num">' + (+r.prog_2027 + +r.demanda_2027 ? fmt(+r.prog_2027 + +r.demanda_2027) : '—') + '</td><td class="num">' + fmt(r.apm_2027) + '</td><td class="num">' + fmt(r.prog_2027) + '</td><td><div class="av"><div class="bar"><i style="width:' + p + '%"></i></div><span class="num">' + pctTxt(+r.prog_2027, +r.apm_2027) + '</span></div></td><td class="num">' + (+r.demanda_2027 ? fmt(r.demanda_2027) : '—') + '</td><td class="num nw">' + esc(r.actualizado || '—') + '</td><td>' + etq[estPanel(r)] + '</td></tr>'; }).join('')
+    '<div class="tw"><table class="pnl"><thead><tr><th class="l">Centro de costo</th><th>Actividades<br>cargadas</th><th>Completas</th><th>Propuesta<br>' + YS[0] + ' (S/)</th><th>Techo APM<br>' + YS[0] + ' (S/)</th><th>Priorizado<br>' + YS[0] + ' (S/)</th><th>Avance</th><th>No priorizado<br>' + YS[0] + ' (S/)</th><th>Última carga</th><th>Estado</th></tr></thead><tbody>' +
+    (vis.length ? vis.map(function (r) { var p = pct(+r.prog_a1, +r.apm_a1); return '<tr data-cc="' + esc(r.cc) + '"><td class="l"><b>' + esc(r.cc) + '</b><div class="uo">' + esc(r.uo) + '</div></td><td class="num">' + r.cargadas + ' de ' + r.aos + '</td><td class="num">' + r.completas + '</td><td class="num">' + (+r.prog_a1 + +r.demanda_a1 ? fmt(+r.prog_a1 + +r.demanda_a1) : '—') + '</td><td class="num">' + fmt(r.apm_a1) + '</td><td class="num">' + fmt(r.prog_a1) + '</td><td><div class="av"><div class="bar"><i style="width:' + p + '%"></i></div><span class="num">' + pctTxt(+r.prog_a1, +r.apm_a1) + '</span></div></td><td class="num">' + (+r.demanda_a1 ? fmt(r.demanda_a1) : '—') + '</td><td class="num nw">' + esc(r.actualizado || '—') + '</td><td>' + etq[estPanel(r)] + '</td></tr>'; }).join('')
       : '<tr><td class="l" colspan="10" style="color:var(--mut)">Ningún centro de costo coincide.</td></tr>') +
     '</tbody></table></div></div>' +
     '<div class="panel"><h2>Versiones del POI</h2><p class="sub">Cierra una versión para congelar la programación tal como está (por ejemplo, al presentar el proyecto de ley). Sirve para comparar después con el PIA.</p>' +
-    '<div class="lst">' + ((S.data.versiones || []).length ? S.data.versiones.map(function (v) { return '<div class="it"><div class="top"><b>' + esc(v.nombre) + '</b><span class="chip info">' + esc(v.etapa) + '</span><span class="hint">' + esc(v.fecha) + ' · ' + esc(v.por) + '</span><span class="sp" style="flex:1"></span><span class="num">Priorizado 2027 S/ ' + fmt(v.priorizado_2027) + ' · No priorizado S/ ' + fmt(v.no_priorizado_2027) + '</span></div></div>'; }).join('') : '<p class="empty">Aún no hay versiones cerradas.</p>') + '</div>' +
-    '<div class="acts"><button class="btn sec" type="button" id="bVer">Cerrar versión ahora</button><span class="msg" id="verMsg"></span></div></div>';
+    '<div class="lst">' + ((S.data.versiones || []).length ? S.data.versiones.map(function (v) { return '<div class="it"><div class="top"><b>' + esc(v.nombre) + '</b><span class="chip info">' + esc(v.etapa) + '</span><span class="hint">' + esc(v.fecha) + ' · ' + esc(v.por) + '</span><span class="sp" style="flex:1"></span><span class="num">Priorizado ' + YS[0] + ' S/ ' + fmt(v.priorizado_a1) + ' · No priorizado S/ ' + fmt(v.no_priorizado_a1) + '</span></div></div>'; }).join('') : '<p class="empty">Aún no hay versiones cerradas.</p>') + '</div>' +
+    '<div class="acts"><button class="btn sec" type="button" id="bVer">Cerrar versión ahora</button><span class="msg" id="verMsg"></span></div></div>' +
+    (S.periodo && S.periodo.estado === 'ACTIVO' ? '<div class="panel"><h2>Siguiente POI Multianual</h2><p class="sub">Abre el periodo ' + (+YS[0] + 1) + '–' + (+YS[2] + 1) + ': copia las actividades y la programación de ' + YS[1] + ' y ' + YS[2] + ', deja ' + (+YS[2] + 1) + ' en blanco y cierra el periodo ' + YS[0] + '–' + YS[2] + ' (queda para consulta). Se usa una vez al año, cuando empieza la formulación del nuevo POI.</p>' +
+    '<div class="acts"><button class="btn sec" type="button" id="bPer">Iniciar periodo ' + (+YS[0] + 1) + '–' + (+YS[2] + 1) + '</button><span class="msg" id="perMsg"></span></div></div>' : '');
+  if ($('bPer')) $('bPer').onclick = function () {
+    var ni = +YS[0] + 1;
+    if (!confirm('Se abrirá el POI Multianual ' + ni + '–' + (ni + 2) + '.\n\n• Se copian las actividades y la programación de ' + YS[1] + ' y ' + YS[2] + '.\n• ' + (ni + 2) + ' queda en blanco para que las áreas lo programen.\n• El periodo ' + YS[0] + '–' + YS[2] + ' queda cerrado (solo consulta).\n\n¿Continuar?')) return;
+    var b = this; b.disabled = true; $('perMsg').className = 'msg'; $('perMsg').textContent = 'Abriendo periodo…';
+    api('nuevoPeriodo', { anio_ini: String(ni) }).then(function (j) {
+      b.disabled = false;
+      if (!j.ok) { $('perMsg').className = 'msg bad'; $('perMsg').textContent = j.error || 'No se pudo abrir el periodo.'; return; }
+      S.per = j.periodo; S.anio = {}; cargar();
+    }).catch(function () { b.disabled = false; });
+  };
   $('bVer').onclick = function () {
-    var n = prompt('Nombre de la versión:', 'Proyecto de Ley 2027'); if (!n) return;
+    var n = prompt('Nombre de la versión:', 'Proyecto de Ley ' + YS[0]); if (!n) return;
     var b = this; b.disabled = true; $('verMsg').className = 'msg'; $('verMsg').textContent = 'Guardando versión…';
     api('cerrarVersion', { nombre: n, etapa: 'Proyecto de ley' }).then(function (j) {
       b.disabled = false;
@@ -385,8 +412,8 @@ function pintarProg() {
 }
 
 function htmlAo(a) {
-  S.anio[a.id_ao] = S.anio[a.id_ao] || '2027';
-  return '<div class="ao" id="ao-' + a.id_ao + '"><div class="ao-h"><span class="id">' + a.id_ao + '</span><span class="sf">Sec_func ' + esc(a.sec_func) + '</span><span class="nm">' + esc(a.nombre_ao || a.finalidad) + '</span><span class="m num">S/ ' + fmt(apmA(a, '2027')) + '</span><span class="st">' + chipAo(a) + '</span></div>' +
+  if (YS.indexOf(S.anio[a.id_ao]) < 0) S.anio[a.id_ao] = YS[0];
+  return '<div class="ao" id="ao-' + a.id_ao + '"><div class="ao-h"><span class="id">' + a.id_ao + '</span><span class="sf">Sec_func ' + esc(a.sec_func) + '</span><span class="nm">' + esc(a.nombre_ao || a.finalidad) + '</span><span class="m num">S/ ' + fmt(apmA(a, YS[0])) + '</span><span class="st">' + chipAo(a) + '</span></div>' +
     '<div class="ao-b hidden">' +
     '<div class="ctx"><div><b>OEI</b>' + esc(a.oei) + '</div><div><b>AEI</b>' + esc(a.aei) + '</div><div><b>' + (a.tipo === 'Inversiones' ? 'Inversión' : 'Producto') + '</b>' + esc(a.producto) + '</div><div><b>Actividad / acción</b>' + esc(a.actividad_efp) + '</div><div><b>Finalidad</b>' + esc(a.finalidad) + '</div><div><b>Sec_func temporal</b>' + esc(a.sec_func) + '</div></div>' +
     '<h3>PM1 · Ficha de la actividad operativa multianual</h3>' +
@@ -522,7 +549,7 @@ function enlazarAo(a) {
   };
   box.querySelector('.addR').onclick = function () {
     var t0 = tareasDe(id)[0];
-    S.data.recursos.push({ k: 'n' + (++S.seq), id: '', id_ao: id, tarea: t0 ? t0.codigo : '1', nombre: '', um: '', llave: '', prev: '', cant: { '2027': '', '2028': '', '2029': '' }, y: nuevoY() }); pintarAo(a);
+    S.data.recursos.push({ k: 'n' + (++S.seq), id: '', id_ao: id, tarea: t0 ? t0.codigo : '1', nombre: '', um: '', llave: '', prev: '', cant: (function () { var o = {}; YS.forEach(function (y) { o[y] = ''; }); return o; })(), y: nuevoY() }); pintarAo(a);
   };
   box.querySelector('.bSave').onclick = function () { guardarAo(a, 'Portal'); };
 }
@@ -799,9 +826,10 @@ $('bExp').onclick = function () {
     if (!j.ok) { btn.disabled = false; btn.textContent = 'Descargar Excel'; alert(j.error || 'No se pudo descargar.'); return; }
     cargarXlsx(function () {
       var wb = XLSX.utils.book_new();
-      j.hojas.forEach(function (h) { XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(h.filas, { header: j.columnas[h.nombre] }), h.nombre); });
+      var ren = function (k) { return String(k).replace(/\bA([123])\b/g, function (m, n) { return (j.anios || YS)[n - 1]; }); };
+      j.hojas.forEach(function (h) { var fs = h.filas.map(function (r) { var o = {}; Object.keys(r).forEach(function (k) { o[ren(k)] = r[k]; }); return o; }); XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(fs, { header: j.columnas[h.nombre].map(ren) }), h.nombre); });
       var d = new Date(), f = d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0');
-      XLSX.writeFile(wb, 'POI_2027_ATU_' + f + '.xlsx');
+      XLSX.writeFile(wb, 'POI_' + YS[0] + '-' + YS[2] + '_ATU_' + f + '.xlsx');
       btn.disabled = false; btn.textContent = 'Descargar Excel';
     });
   }).catch(function () { btn.disabled = false; btn.textContent = 'Descargar Excel'; });
