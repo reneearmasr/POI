@@ -250,8 +250,7 @@ begin
   if poi.t(p1 ->> 'nombre_ao') = '' then perform poi.falla('El nombre de la actividad operativa no puede quedar vacío.'); end if;
 
   -- ===== PM2 =====
-  drop table if exists _t;
-  create temp table _t (id text, codigo text, nombre text, repr boolean, acum boolean, um text,
+  create temp table if not exists _t (id text, codigo text, nombre text, repr boolean, acum boolean, um text,
                         m2027 numeric[], m2028 numeric[], m2029 numeric[], elim boolean, padre text, prof int, propio boolean) on commit drop;
   select coalesce(max(substring(id_tarea from '-T(\d+)$')::int), 0) into max_t from poi.pm2_tarea where id_ao = v_id;
   for e in select value from jsonb_array_elements(case when jsonb_typeof(b -> 'pm2') = 'array' then b -> 'pm2' else '[]' end) loop
@@ -301,8 +300,7 @@ begin
   end loop;
 
   -- ===== PM3 =====
-  drop table if exists _r;
-  create temp table _r (id text, tarea text, nombre text, um text, llave text, prev text, cant jsonb,
+  create temp table if not exists _r (id text, tarea text, nombre text, um text, llave text, prev text, cant jsonb,
                         m2027 numeric[], m2028 numeric[], m2029 numeric[], elim boolean, dem boolean,
                         ff text, rubro text, clasificador text) on commit drop;
   select coalesce(max(substring(id_rec from '-R(\d+)$')::int), 0) into max_r from poi.pm3_recurso where id_ao = v_id;
