@@ -165,7 +165,7 @@ h4{font-size:13px;margin:16px 0 6px;color:var(--ink2)}
   <main>
     <div id="tProg">
       <div class="kpis" id="kpis"></div>
-      <p class="hint">Programación multianual 2027–2029 ajustada a la APM: ficha de la actividad (PM1), metas físicas por tarea (PM2) y recursos por partida (PM3). La demanda adicional va aparte, por NMP o en la siguiente formulación.</p>
+      <p class="hint">Programación multianual 2027–2029 ajustada a la APM: ficha de la actividad (PM1), metas físicas por tarea (PM2) y recursos por partida (PM3). Lo que la propuesta del área no alcanza dentro del techo APM queda como <b>propuesta no priorizada</b>: no se pierde y sirve para la consistencia con el PIA.</p>
       <div id="aoList"></div>
     </div>
     <div id="tNmp" class="hidden">
@@ -342,8 +342,9 @@ function pintarPanel() {
   $('kpis').innerHTML =
     '<div class="kpi"><div class="l">Centros de costo con carga</div><div class="v">' + T.ccCar + ' de ' + rows.length + '</div><div class="bar"><i style="width:' + pct(T.ccCar, rows.length) + '%"></i></div></div>' +
     '<div class="kpi"><div class="l">Actividades cargadas</div><div class="v">' + T.car + ' de ' + T.aos + '</div><div class="s">' + T.comp + ' completas</div></div>' +
-    '<div class="kpi"><div class="l">Programado 2027 (PM3)</div><div class="v num">S/ ' + fmt(T.prog) + '</div><div class="s">' + pctTxt(T.prog, T.apm) + ' de la APM (S/ ' + fmt(T.apm) + ')</div><div class="bar"><i style="width:' + pct(T.prog, T.apm) + '%"></i></div></div>' +
-    '<div class="kpi"><div class="l">Demanda adicional 2027</div><div class="v num">S/ ' + fmt(T.dem) + '</div><div class="s">Fuera de la APM</div></div>' +
+    '<div class="kpi"><div class="l">Propuesta de las áreas 2027</div><div class="v num">S/ ' + fmt(T.prog + T.dem) + '</div><div class="s">Lo que pidieron las áreas cargadas</div></div>' +
+    '<div class="kpi"><div class="l">Priorizado 2027 (techo APM)</div><div class="v num">S/ ' + fmt(T.prog) + '</div><div class="s">' + pctTxt(T.prog, T.apm) + ' del techo (S/ ' + fmt(T.apm) + ')</div><div class="bar"><i style="width:' + pct(T.prog, T.apm) + '%"></i></div></div>' +
+    '<div class="kpi"><div class="l">No priorizado 2027</div><div class="v num">S/ ' + fmt(T.dem) + '</div><div class="s">Propuesta fuera del techo</div></div>' +
     '<div class="kpi"><div class="l">NMP por revisar</div><div class="v">' + T.nmp + '</div><div class="s">' + (T.nmp ? 'Ver pestaña Modificaciones' : 'Sin pendientes') + '</div></div>';
   S.pf = S.pf || 'todos'; S.pq = S.pq || '';
   var etq = { sin: '<span class="chip warn">Sin carga</span>', proc: '<span class="chip info">En proceso</span>', ok: '<span class="chip ok">Completo</span>' };
@@ -352,10 +353,22 @@ function pintarPanel() {
   $('aoList').innerHTML = '<div class="panel"><h2>Panel de control · POI 2027</h2><p class="sub">Avance de la programación por centro de costo. Haz clic en una fila para abrir sus actividades.</p>' +
     '<div class="pnl-f">' + [['todos', 'Todos'], ['sin', 'Sin carga'], ['proc', 'En proceso'], ['ok', 'Completos']].map(function (f) { return '<button type="button" data-f="' + f[0] + '" class="' + (S.pf === f[0] ? 'on' : '') + '">' + f[1] + ' (' + cnt[f[0]] + ')</button>'; }).join('') +
     '<input id="pnlQ" placeholder="Buscar centro de costo o unidad" value="' + esc(S.pq) + '"></div>' +
-    '<div class="tw"><table class="pnl"><thead><tr><th class="l">Centro de costo</th><th>Actividades<br>cargadas</th><th>Completas</th><th>APM 2027 (S/)</th><th>Programado 2027 (S/)</th><th>Avance</th><th>Demanda<br>adicional (S/)</th><th>Última carga</th><th>Estado</th></tr></thead><tbody>' +
-    (vis.length ? vis.map(function (r) { var p = pct(+r.prog_2027, +r.apm_2027); return '<tr data-cc="' + esc(r.cc) + '"><td class="l"><b>' + esc(r.cc) + '</b><div class="uo">' + esc(r.uo) + '</div></td><td class="num">' + r.cargadas + ' de ' + r.aos + '</td><td class="num">' + r.completas + '</td><td class="num">' + fmt(r.apm_2027) + '</td><td class="num">' + fmt(r.prog_2027) + '</td><td><div class="av"><div class="bar"><i style="width:' + p + '%"></i></div><span class="num">' + pctTxt(+r.prog_2027, +r.apm_2027) + '</span></div></td><td class="num">' + (+r.demanda_2027 ? fmt(r.demanda_2027) : '—') + '</td><td class="num nw">' + esc(r.actualizado || '—') + '</td><td>' + etq[estPanel(r)] + '</td></tr>'; }).join('')
-      : '<tr><td class="l" colspan="9" style="color:var(--mut)">Ningún centro de costo coincide.</td></tr>') +
-    '</tbody></table></div></div>';
+    '<div class="tw"><table class="pnl"><thead><tr><th class="l">Centro de costo</th><th>Actividades<br>cargadas</th><th>Completas</th><th>Propuesta<br>2027 (S/)</th><th>Techo APM<br>2027 (S/)</th><th>Priorizado<br>2027 (S/)</th><th>Avance</th><th>No priorizado<br>2027 (S/)</th><th>Última carga</th><th>Estado</th></tr></thead><tbody>' +
+    (vis.length ? vis.map(function (r) { var p = pct(+r.prog_2027, +r.apm_2027); return '<tr data-cc="' + esc(r.cc) + '"><td class="l"><b>' + esc(r.cc) + '</b><div class="uo">' + esc(r.uo) + '</div></td><td class="num">' + r.cargadas + ' de ' + r.aos + '</td><td class="num">' + r.completas + '</td><td class="num">' + (+r.prog_2027 + +r.demanda_2027 ? fmt(+r.prog_2027 + +r.demanda_2027) : '—') + '</td><td class="num">' + fmt(r.apm_2027) + '</td><td class="num">' + fmt(r.prog_2027) + '</td><td><div class="av"><div class="bar"><i style="width:' + p + '%"></i></div><span class="num">' + pctTxt(+r.prog_2027, +r.apm_2027) + '</span></div></td><td class="num">' + (+r.demanda_2027 ? fmt(r.demanda_2027) : '—') + '</td><td class="num nw">' + esc(r.actualizado || '—') + '</td><td>' + etq[estPanel(r)] + '</td></tr>'; }).join('')
+      : '<tr><td class="l" colspan="10" style="color:var(--mut)">Ningún centro de costo coincide.</td></tr>') +
+    '</tbody></table></div></div>' +
+    '<div class="panel"><h2>Versiones del POI</h2><p class="sub">Cierra una versión para congelar la programación tal como está (por ejemplo, al presentar el proyecto de ley). Sirve para comparar después con el PIA.</p>' +
+    '<div class="lst">' + ((S.data.versiones || []).length ? S.data.versiones.map(function (v) { return '<div class="it"><div class="top"><b>' + esc(v.nombre) + '</b><span class="chip info">' + esc(v.etapa) + '</span><span class="hint">' + esc(v.fecha) + ' · ' + esc(v.por) + '</span><span class="sp" style="flex:1"></span><span class="num">Priorizado 2027 S/ ' + fmt(v.priorizado_2027) + ' · No priorizado S/ ' + fmt(v.no_priorizado_2027) + '</span></div></div>'; }).join('') : '<p class="empty">Aún no hay versiones cerradas.</p>') + '</div>' +
+    '<div class="acts"><button class="btn sec" type="button" id="bVer">Cerrar versión ahora</button><span class="msg" id="verMsg"></span></div></div>';
+  $('bVer').onclick = function () {
+    var n = prompt('Nombre de la versión:', 'Proyecto de Ley 2027'); if (!n) return;
+    var b = this; b.disabled = true; $('verMsg').className = 'msg'; $('verMsg').textContent = 'Guardando versión…';
+    api('cerrarVersion', { nombre: n, etapa: 'Proyecto de ley' }).then(function (j) {
+      b.disabled = false;
+      if (!j.ok) { $('verMsg').className = 'msg bad'; $('verMsg').textContent = j.error || 'No se pudo cerrar la versión.'; return; }
+      cargar();
+    }).catch(function () { b.disabled = false; });
+  };
   $('aoList').querySelectorAll('.pnl-f button').forEach(function (b) { b.onclick = function () { S.pf = b.dataset.f; pintarPanel(); }; });
   var qi = $('pnlQ'); qi.oninput = function () { S.pq = qi.value; var pos = qi.selectionStart; pintarPanel(); var n = $('pnlQ'); n.focus(); n.setSelectionRange(pos, pos); };
   $('aoList').querySelectorAll('tr[data-cc]').forEach(function (tr) { tr.onclick = function () { S.cc = tr.dataset.cc; cargar(); }; });
@@ -436,7 +449,7 @@ function resumen(a) {
   }).join('');
   box.querySelector('.st').innerHTML = chipAo(a);
   var dm = demandaDe(id);
-  box.querySelector('.dem').innerHTML = !dm.length ? '' : '<h4>Demanda adicional (fuera de la APM, no forma parte del POI)</h4><p class="hint">Queda registrada para sustentar una NMP o la próxima formulación.</p><div class="tw"><table><thead><tr><th class="l">Recurso</th><th>Clasificador</th><th>Tarea</th>' + YS.map(function (yy) { return '<th>' + yy + ' (S/)</th>'; }).join('') + '<th></th></tr></thead><tbody>' +
+  box.querySelector('.dem').innerHTML = !dm.length ? '' : '<h4>Propuesta no priorizada (fuera del techo APM)</h4><p class="hint">Forma parte de la propuesta del área pero no entra en el proyecto de ley. Se usa en la consistencia del POI con el PIA o para sustentar una NMP.</p><div class="tw"><table><thead><tr><th class="l">Recurso</th><th>Clasificador</th><th>Tarea</th>' + YS.map(function (yy) { return '<th>' + yy + ' (S/)</th>'; }).join('') + '<th></th></tr></thead><tbody>' +
     dm.map(function (r) { return '<tr data-k="' + r.k + '"><td class="l">' + esc(r.nombre) + '</td><td class="mono">' + esc(r.clasificador) + '</td><td>' + esc(r.tarea) + '</td>' + YS.map(function (yy) { return '<td class="num">' + fmt2(totR(r, yy)) + '</td>'; }).join('') + '<td><button class="del d-del" type="button" title="Quitar">×</button></td></tr>'; }).join('') + '</tbody></table></div>';
   box.querySelectorAll('.d-del').forEach(function (b) { b.onclick = function () { var k = b.closest('tr').dataset.k; S.data.recursos.forEach(function (r) { if (String(r.k) === k) r.eliminar = true; }); resumen(a); }; });
 }
@@ -648,10 +661,10 @@ function prevImport(x, a, sf) {
     x._ok = ok; x._dem = dem;
     var tot = function (arr, y) { return r2(arr.reduce(function (s, r) { return s + r.y[y].reduce(function (u, v) { return u + v; }, 0); }, 0)); };
     var orig = function (y) { return r2(x.recursos.reduce(function (s, r) { return s + r.y[y].reduce(function (u, v) { return u + v; }, 0); }, 0)); };
-    $('impDet').innerHTML = '<p class="hint">' + x.tareas.length + ' tareas PM2 · ' + x.recursos.length + ' recursos PM3 en el archivo. Lo que excede la APM no se pierde: queda como demanda adicional.</p><div class="tw"><table><thead><tr><th class="l">Año</th><th>Solicitado por el área</th><th>APM</th><th>Se programa (POI)</th><th>Demanda adicional</th></tr></thead><tbody>' +
+    $('impDet').innerHTML = '<p class="hint">' + x.tareas.length + ' tareas PM2 · ' + x.recursos.length + ' recursos PM3 en el archivo. Lo que excede el techo APM no se pierde: queda como propuesta no priorizada.</p><div class="tw"><table><thead><tr><th class="l">Año</th><th>Propuesta del área</th><th>Techo APM</th><th>Priorizado</th><th>No priorizado</th></tr></thead><tbody>' +
       YS.map(function (y) { return '<tr><td class="l">' + y + '</td><td class="num">' + fmt2(orig(y)) + '</td><td class="num">' + fmt2(ao ? apmA(ao, y) : 0) + '</td><td class="num">' + fmt2(tot(ok, y)) + '</td><td class="num dn">' + fmt2(tot(dem, y)) + '</td></tr>'; }).join('') +
       '</tbody></table></div>' +
-      (dem.length ? '<p class="hint">Demanda adicional: ' + dem.map(function (r) { return esc(r.src.clasificador + ' ' + r.src.nombre + ' (' + r.motivo.toLowerCase() + ')'); }).join(' · ') + '.</p>' : '') +
+      (dem.length ? '<p class="hint">No priorizado: ' + dem.map(function (r) { return esc(r.src.clasificador + ' ' + r.src.nombre + ' (' + r.motivo.toLowerCase() + ')'); }).join(' · ') + '.</p>' : '') +
       '<div class="acts"><button class="btn" type="button" id="bImp">Reemplazar la programación de ' + id + ' con este archivo</button><span class="msg" id="impRes"></span></div>';
     $('bImp').onclick = function () { aplicarImport(x, aoDe($('impAo').value)); };
   };

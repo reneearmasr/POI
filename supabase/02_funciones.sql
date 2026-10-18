@@ -359,11 +359,11 @@ begin
   if array_length(excesos, 1) > 0 then
     perform poi.falla('La programación debe ajustarse a la APM. ' || array_to_string(excesos[1:4], '; ')
       || case when array_length(excesos, 1) > 4 then '; y ' || (array_length(excesos, 1) - 4) || ' más' else '' end
-      || '. Registra lo que falta como demanda adicional o solicita una NMP.');
+      || '. Registra el exceso como propuesta no priorizada o solicita una NMP.');
   end if;
   select count(*), coalesce(sum(poi.suma(m2027)), 0) into ndem, mdem from _r where dem and not elim;
   if ndem > 0 then
-    avisos := avisos || ('Demanda adicional registrada (fuera de la APM): ' || ndem || ' recurso(s), S/ ' || poi.fmt(mdem) || ' en 2027.');
+    avisos := avisos || ('Propuesta no priorizada (fuera del techo APM): ' || ndem || ' recurso(s), S/ ' || poi.fmt(mdem) || ' en 2027.');
   end if;
 
   -- ===== Escritura =====
@@ -555,7 +555,7 @@ create or replace function public.poi_api(p jsonb) returns jsonb
 language plpgsql security definer
 set search_path = poi, extensions, public
 as $$
-declare accion text := coalesce(p ->> 'accion', ''); s jsonb; cc text; det text;
+declare accion text := coalesce(p ->> 'accion', ''); s jsonb; cc text; det text; r jsonb;
 begin
   if accion = 'ping' then return jsonb_build_object('ok', true, 'hora', now()); end if;
   if accion = 'login' then return poi.login(p); end if;
@@ -564,13 +564,17 @@ begin
   if s ->> 'r' = 'OPP' then cc := poi.t(p ->> 'cc'); end if;
   if accion in ('guardarAO', 'enviarNMP') and coalesce(cc, '') = '' then perform poi.falla('Selecciona un centro de costo.'); end if;
   case accion
-    when 'datos'            then return poi.datos(s, cc);
+    when 'datos' then
+      r := poi.datos(s, cc);
+      if s ->> 'r' = 'OPP' and coalesce(cc, '') = '' then r := r || jsonb_build_object('versiones', poi.versiones()); end if;
+      return r;
     when 'guardarAO'        then return poi.guardar_ao(s, cc, p);
     when 'enviarNMP'        then return poi.enviar_nmp(s, cc, p);
     when 'resolverNMP'      then return poi.resolver_nmp(s, p);
     when 'cambiarClave'     then return poi.cambiar_clave(s, p);
     when 'restablecerClave' then return poi.restablecer_clave(s, p);
     when 'exportar'         then return poi.exportar(s);
+    when 'cerrarVersion'    then return poi.cerrar_version(s, p);
     else perform poi.falla('Acción no reconocida.');
   end case;
   return null;
@@ -582,7 +586,6 @@ exception
     return jsonb_build_object('ok', false, 'error', sqlerrm)
         || case when coalesce(det, '') <> '' then jsonb_build_object('detalle', det::jsonb) else '{}'::jsonb end;
 end $$;
-
 revoke all on function public.poi_api(jsonb) from public;
 do $$ begin
   if exists (select 1 from pg_roles where rolname = 'anon') then execute 'grant execute on function public.poi_api(jsonb) to anon'; end if;
