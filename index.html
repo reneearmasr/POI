@@ -288,6 +288,29 @@ table.pnl tbody tr:hover td{background:var(--acc2)}
 .cal-i>p,.cal-i>ul{margin:10px 14px}
 .cal-l{padding-left:18px;max-height:260px;overflow:auto;font-size:13px}
 .cal-l li{margin:3px 0}
+/* PEI */
+.pei-ao{border:1px solid var(--line);border-left:4px solid var(--acc);border-radius:8px;margin:14px 0 4px;background:#fff}
+.pei-ao summary{padding:10px 12px;cursor:pointer;display:flex;gap:10px;flex-wrap:wrap;align-items:baseline}
+.pei-ao summary b{color:var(--ink)}
+.pei-ao[open] summary{border-bottom:1px solid var(--line)}
+.pei-ao>p,.pei-ao>.pei-w{margin:10px 14px}
+.pei-w .pei-i{width:100%;min-width:480px}
+.pei-t{font-size:13px;color:var(--ink2)}
+.pei-i{border-collapse:collapse;font-size:13px}
+.pei-i th{font-size:12px;color:var(--mut);font-weight:600;text-align:right;padding:5px 8px;border-bottom:1px solid var(--line)}
+.pei-i th.l,.pei-i td.l{text-align:left}
+.pei-i td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right;vertical-align:top}
+.pei-o{border:1px solid var(--line);border-radius:8px;margin-top:10px;background:#fff}
+.pei-o summary{padding:12px 14px;cursor:pointer;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.pei-o summary b{color:var(--ink)}
+.pei-o[open] summary{border-bottom:1px solid var(--line)}
+.pei-n{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:var(--ink);color:#fff;font:600 12px/1 'IBM Plex Sans Condensed','IBM Plex Sans',sans-serif;flex:0 0 auto}
+.pei-n.s{background:#fff;color:var(--ink);border:2px solid var(--acc);width:22px;height:22px}
+.pei-oi{display:flex;flex-direction:column;gap:4px;padding:10px 14px;font-size:13px;color:var(--ink2);background:#F6F8FA}
+.pei-o .tw{margin:0}
+.pei-t2 td.l{max-width:380px}
+.pei-li{font-size:12.5px;color:var(--ink2);margin:2px 0}
+.pei-li b{color:var(--acc)}
 </style>
 </head>
 <body>
@@ -617,6 +640,7 @@ function cmnReportes() {
     '<div><b>Anexo B-4 · POI Multianual con programación física y de costeo</b><span>Por OEI y AEI: cada actividad con ubigeo, unidad de medida, prioridad, meta física y costeo mensual de los tres años.</span><button class="btn sec sm" type="button" id="bB4">Descargar Anexo B-4</button></div>' +
     '<div><b>CMN del POI (plantilla)</b><span>Bienes y servicios de la PM3 con código de ítem, para que Abastecimiento los registre en el SIGA. Es el mismo formato que se puede volver a cargar.</span><button class="btn sec sm" type="button" id="bCmnPoi">Descargar CMN del POI</button></div>' +
     '<div><b>Contenido mínimo del POI (tabla 10)</b><span>Presentación (periodo, OEI/AEI, actividades, centros de costo, monto) y programación financiera por genérica de gasto, por fuente y rubro y por centro de costo.</span><button class="btn sec sm" type="button" id="bT10">Descargar contenido mínimo</button></div>' +
+    '<div><b>Matriz del PEI (anexo B-3) y articulación con el POI</b><span>OEI y AEI del PEI 2024–2030 Actualizado con su ruta estratégica, indicadores, línea de base y logros esperados, y las actividades del POI que contribuyen a cada uno.</span><button class="btn sec sm" type="button" id="bB3">Descargar matriz del PEI</button></div>' +
     '</div><span class="msg" id="repMsg"></span></div>';
 }
 function cmnCarga() {
@@ -631,6 +655,7 @@ function enlazarCmn(j) {
   if ($('bB4')) $('bB4').onclick = descargarB4;
   if ($('bCmnPoi')) $('bCmnPoi').onclick = descargarCmnPoi;
   if ($('bT10')) $('bT10').onclick = descargarT10;
+  if ($('bB3')) $('bB3').onclick = descargarB3;
   if ($('fCmn')) {
     var rel = function () { var f = $('fCmn').files[0]; if (f) leerCmn(f); };
     $('fCmn').onchange = rel; $('cmnCc').onchange = rel; $('cmnAn').onchange = rel;
@@ -841,9 +866,9 @@ function enlazarCalidad() {
 function prelacionHtml() {
   var p = S.data.prelacion || []; if (!p.length) return '';
   var pri = { 'MUY ALTA': 'Muy alta', 'ALTA': 'Alta', 'MEDIA': 'Media' };
-  return '<div class="panel"><h2>Prelación de lo no priorizado · ' + YS[0] + '</h2><p class="sub">Si llegan recursos adicionales, la guía recomienda destinarlos a lo no financiado del primer año según la prioridad (principio de prelación, numeral 3.2.3). Orden: prioridad, OEI, AEI y monto. La columna acumulado indica cuánto se necesita para financiar hasta esa actividad.</p>' +
-    '<div class="tw"><table class="pnl"><thead><tr><th>N°</th><th class="l">Actividad</th><th>Centro de costo</th><th>Prioridad</th><th>OEI / AEI</th><th>No priorizado ' + YS[0] + ' (S/)</th><th>Acumulado (S/)</th></tr></thead><tbody>' +
-    p.map(function (x, i) { return '<tr data-cc="' + esc(x.cc) + '"><td class="num">' + (i + 1) + '</td><td class="l"><b>' + esc(x.id) + '</b> · ' + esc(x.nombre) + '</td><td>' + esc(x.cc) + '</td><td>' + (pri[x.prioridad] ? '<span class="chip ' + (x.prioridad === 'MEDIA' ? 'neu' : 'info') + '">' + pri[x.prioridad] + '</span>' : '<span class="chip warn">Sin prioridad</span>') + '</td><td class="mono">' + esc(x.oei) + ' / ' + esc(x.aei) + '</td><td class="num">' + fmt(x.nopri) + '</td><td class="num">' + fmt(x.acum) + '</td></tr>'; }).join('') +
+  return '<div class="panel"><h2>Prelación de lo no priorizado · ' + YS[0] + '</h2><p class="sub">Si llegan recursos adicionales, la guía recomienda destinarlos a lo no financiado del primer año según la prioridad (principio de prelación, numeral 3.2.3). Orden: prioridad de la actividad, ruta estratégica del PEI (prioridad del OEI y de la AEI) y monto. La columna acumulado indica cuánto se necesita para financiar hasta esa actividad.</p>' +
+    '<div class="tw"><table class="pnl"><thead><tr><th>N°</th><th class="l">Actividad</th><th>Centro de costo</th><th>Prioridad</th><th>OEI / AEI</th><th title="Prioridad del OEI y de la AEI en la ruta estratégica del PEI">Ruta PEI</th><th>No priorizado ' + YS[0] + ' (S/)</th><th>Acumulado (S/)</th></tr></thead><tbody>' +
+    p.map(function (x, i) { return '<tr data-cc="' + esc(x.cc) + '"><td class="num">' + (i + 1) + '</td><td class="l"><b>' + esc(x.id) + '</b> · ' + esc(x.nombre) + '</td><td>' + esc(x.cc) + '</td><td>' + (pri[x.prioridad] ? '<span class="chip ' + (x.prioridad === 'MEDIA' ? 'neu' : 'info') + '">' + pri[x.prioridad] + '</span>' : '<span class="chip warn">Sin prioridad</span>') + '</td><td class="mono">' + esc(x.oei) + ' / ' + esc(x.aei) + '</td><td class="num">' + esc(x.ruta || '') + '</td><td class="num">' + fmt(x.nopri) + '</td><td class="num">' + fmt(x.acum) + '</td></tr>'; }).join('') +
     '</tbody></table></div></div>';
 }
 
@@ -875,6 +900,59 @@ function descargarT10() {
       $('repMsg').textContent = '';
     });
   });
+}
+// ---------- PEI 2024-2030 Actualizado ----------
+function peiDe(c) { return (S.data.pei || []).find(function (e) { return e.codigo === c; }); }
+function logrosHtml(ind) {
+  return '<div class="tw pei-w"><table class="pei-i"><thead><tr><th class="l">Indicador</th><th>Línea de base</th>' + YS.map(function (y) { return '<th>Logro ' + y + '</th>'; }).join('') + '</tr></thead><tbody>' +
+    ind.map(function (i) { return '<tr><td class="l">' + esc(i.nombre) + '</td><td class="num nw">' + esc(i.linea_valor) + ' <span class="hint">(' + i.linea_anio + ')</span></td>' + YS.map(function (y) { return '<td class="num nw"><b>' + esc((i.logros || {})[y] || '—') + '</b></td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table></div>';
+}
+function peiAoHtml(a) {
+  var ae = peiDe(a.cod_aei), oe = peiDe(a.cod_oei); if (!ae && !oe) return '';
+  return '<details class="pei-ao"><summary><b>Contribución al PEI 2024–2030</b><span class="hint">' + esc(a.cod_aei || '') + (ae ? ' · prioridad ' + ae.prioridad + ' de su OEI en la ruta estratégica' : '') + (oe ? ' · ' + esc(a.cod_oei) + ' prioridad ' + oe.prioridad : '') + ' · ver logros esperados</span></summary>' +
+    (ae ? '<p class="pei-t"><b>' + esc(ae.codigo) + '</b> ' + esc(ae.descripcion) + ' <span class="hint">Responsable: ' + esc(ae.responsable || '') + '</span></p>' + logrosHtml(ae.indicadores || []) : '') +
+    (oe ? '<p class="pei-t"><b>' + esc(oe.codigo) + '</b> ' + esc(oe.descripcion) + '</p>' + logrosHtml(oe.indicadores || []) : '') +
+    '<p class="hint">La meta física y el costeo de esta actividad deben contribuir a estos logros. Fuente: PEI 2024–2030 Actualizado de la ATU, anexo B-3.</p></details>';
+}
+function peiHtml() {
+  var pe = S.data.pei || []; if (!pe.length) return '';
+  var oeis = pe.filter(function (e) { return e.tipo === 'OEI'; });
+  return '<div class="panel"><h2>PEI 2024–2030 Actualizado · contribución del POI ' + YS[0] + '–' + YS[2] + '</h2><p class="sub">Cada acción estratégica (AEI) del PEI con su prioridad en la ruta estratégica, los logros esperados de sus indicadores para el periodo y lo que el POI programa para lograrlos. Haz clic en un OEI para ver sus AEI.</p>' +
+    oeis.map(function (o) {
+      var aeis = pe.filter(function (e) { return e.tipo === 'AEI' && e.oei === o.codigo; });
+      var tot = aeis.reduce(function (s, e) { return s + +e.prio; }, 0), nop = aeis.reduce(function (s, e) { return s + +e.nopri; }, 0), nao = aeis.reduce(function (s, e) { return s + e.aos; }, 0);
+      return '<details class="pei-o"' + (o.prioridad === 1 ? ' open' : '') + '><summary><span class="pei-n">' + o.prioridad + '</span><b>' + esc(o.codigo) + '</b> ' + esc(o.descripcion) + '<span class="hint">' + aeis.length + ' AEI · ' + nao + ' actividades · priorizado ' + YS[0] + ' S/ ' + fmt(tot) + (nop ? ' · no priorizado S/ ' + fmt(nop) : '') + '</span></summary>' +
+        '<div class="pei-oi">' + (o.indicadores || []).map(function (i) { return '<span>' + esc(i.nombre) + ': <b>' + YS.map(function (y) { return esc((i.logros || {})[y] || '—'); }).join(' · ') + '</b> <span class="hint">(' + YS[0] + '–' + YS[2] + ')</span></span>'; }).join('') + '</div>' +
+        '<div class="tw"><table class="pnl pei-t2"><thead><tr><th>Ruta</th><th class="l">Acción estratégica institucional</th><th class="l">Indicadores · logros ' + YS.join(' / ') + '</th><th>Actividades<br>cargadas</th><th>Priorizado<br>' + YS[0] + ' (S/)</th><th>No priorizado<br>' + YS[0] + ' (S/)</th></tr></thead><tbody>' +
+        aeis.map(function (e) {
+          return '<tr><td class="num"><span class="pei-n s">' + e.prioridad + '</span></td><td class="l"><b>' + esc(e.codigo) + '</b> ' + esc(e.descripcion) + '<div class="uo">' + esc(e.responsable || '') + (e.ccs.length ? ' · ' + esc(e.ccs.join(', ')) : '') + '</div></td>' +
+            '<td class="l">' + (e.indicadores || []).map(function (i) { return '<div class="pei-li">' + esc(i.nombre) + ' <b class="nw">' + YS.map(function (y) { return esc((i.logros || {})[y] || '—'); }).join(' / ') + '</b></div>'; }).join('') + '</td>' +
+            '<td class="num nw">' + e.cargadas + ' de ' + e.aos + '</td><td class="num">' + (+e.prio ? fmt(e.prio) : '—') + '</td><td class="num">' + (+e.nopri ? fmt(e.nopri) : '—') + '</td></tr>';
+        }).join('') + '</tbody></table></div></details>';
+    }).join('') + '</div>';
+}
+function descargarB3() {
+  $('repMsg').className = 'msg'; $('repMsg').textContent = 'Preparando matriz del PEI…';
+  var go = function (pe) {
+    cargarXlsx(function () {
+      var A = [['Anexo B-3: Matriz del Plan Estratégico Institucional y articulación con el POI ' + YS[0] + '–' + YS[2]], ['Sector: Transportes y Comunicaciones · Pliego: Autoridad de Transporte Urbano para Lima y Callao - ATU · Periodo: 2024-2030 (PEI Actualizado)'], [],
+        ['Código', 'Tipo', 'Descripción', 'Prioridad (ruta estratégica)', 'Indicador', 'Línea de base (año)', 'Línea de base (valor)', '2024', '2025', '2026', '2027', '2028', '2029', '2030', 'Órgano responsable', 'Actividades POI', 'Centros de costo', 'Priorizado ' + YS[0] + ' (S/)', 'No priorizado ' + YS[0] + ' (S/)']];
+      pe.forEach(function (e) {
+        var ind = e.indicadores.length ? e.indicadores : [{ nombre: '', logros: {} }];
+        ind.forEach(function (i, k) {
+          A.push([k ? '' : e.codigo, k ? '' : e.tipo, k ? '' : e.descripcion, k ? '' : e.prioridad, i.nombre, i.linea_anio || '', i.linea_valor || ''].concat(['2024', '2025', '2026', '2027', '2028', '2029', '2030'].map(function (y) { return (i.logros || {})[y] || ''; }))
+            .concat([i.responsable || e.responsable || '', k ? '' : (e.tipo === 'AEI' ? e.aos : ''), k ? '' : (e.ccs || []).join(', '), k || e.tipo !== 'AEI' ? '' : +e.prio, k || e.tipo !== 'AEI' ? '' : +e.nopri]));
+        });
+      });
+      A.push([]); A.push(['Fuente: PEI 2024-2030 Actualizado de la ATU (abril 2026), anexo B-3 y tabla 03 Ruta Estratégica. Montos del POI: PM3 del primer año del periodo.']);
+      var wb = XLSX.utils.book_new(), ws = XLSX.utils.aoa_to_sheet(A);
+      ws['!cols'] = [{ wch: 11 }, { wch: 6 }, { wch: 50 }, { wch: 10 }, { wch: 60 }, { wch: 10 }, { wch: 12 }].concat([1, 2, 3, 4, 5, 6, 7].map(function () { return { wch: 10 }; })).concat([{ wch: 34 }, { wch: 10 }, { wch: 22 }, { wch: 14 }, { wch: 14 }]);
+      XLSX.utils.book_append_sheet(wb, ws, 'Anexo B-3');
+      XLSX.writeFile(wb, 'Matriz_PEI_2024-2030_POI_' + YS[0] + '-' + YS[2] + '.xlsx');
+      $('repMsg').textContent = '';
+    });
+  };
+  if (S.data.pei && S.data.pei.length) go(S.data.pei); else { $('repMsg').className = 'msg bad'; $('repMsg').textContent = 'No se encontró la matriz del PEI.'; }
 }
 function soloLectura() {
   var ro = S.periodo && S.periodo.estado === 'CERRADO', bn = $('roBan');
@@ -1000,7 +1078,7 @@ function pintarPanel() {
     (vis.length ? vis.map(function (r) { var p = pct(+r.prog_a1, +r.apm_a1); return '<tr data-cc="' + esc(r.cc) + '" title="' + esc(r.actualizado ? 'Última carga: ' + r.actualizado : 'Sin carga') + '"><td class="l"><b>' + esc(r.cc) + '</b><div class="uo">' + esc(r.uo) + '</div></td><td class="num">' + r.cargadas + ' de ' + r.aos + '<div class="uo">' + r.completas + (r.completas === 1 ? ' completa' : ' completas') + (r.sin_prioridad ? ' · ' + r.sin_prioridad + ' sin prioridad' : '') + '</div></td><td class="num">' + (+r.prog_a1 + +r.demanda_a1 ? fmt(+r.prog_a1 + +r.demanda_a1) : '—') + '</td><td class="num">' + fmt(r.apm_a1) + '</td><td class="num">' + fmt(r.prog_a1) + '</td><td><div class="av"><div class="bar"><i style="width:' + p + '%"></i></div><span class="num">' + pctTxt(+r.prog_a1, +r.apm_a1) + '</span></div></td><td class="num">' + (+r.demanda_a1 ? fmt(r.demanda_a1) : '—') + '</td><td>' + chipCmn(r) + '</td><td>' + chipReg(r.registro) + '</td><td>' + etq[estPanel(r)] + '</td></tr>'; }).join('')
       : '<tr><td class="l" colspan="10" style="color:var(--mut)">Ningún centro de costo coincide.</td></tr>') +
     '</tbody></table></div></div>' +
-    calidadHtml() + prelacionHtml() +
+    peiHtml() + calidadHtml() + prelacionHtml() +
     '<div class="panel"><h2>Versiones del POI</h2><p class="sub">Cierra una versión para congelar la programación tal como está (por ejemplo, al presentar el proyecto de ley). Sirve para comparar después con el PIA.</p>' +
     '<div class="lst">' + ((S.data.versiones || []).length ? S.data.versiones.map(function (v) { return '<div class="it"><div class="top"><b>' + esc(v.nombre) + '</b><span class="chip info">' + esc(v.etapa) + '</span><span class="hint">' + esc(v.fecha) + ' · ' + esc(v.por) + '</span><span class="sp" style="flex:1"></span><span class="num">Priorizado ' + YS[0] + ' S/ ' + fmt(v.priorizado_a1) + ' · No priorizado S/ ' + fmt(v.no_priorizado_a1) + '</span></div></div>'; }).join('') : '<p class="empty">Aún no hay versiones cerradas.</p>') + '</div>' +
     '<div class="acts ver-f"><label for="verEt">Etapa</label><select class="inp" id="verEt">' + ETAPAS_VER.map(function (e) { return '<option' + (e === etapaHoy().ver ? ' selected' : '') + '>' + e + '</option>'; }).join('') + '</select><button class="btn sec" type="button" id="bVer">Cerrar versión ahora</button><span class="msg" id="verMsg"></span></div></div>' +
@@ -1048,6 +1126,7 @@ function htmlAo(a) {
   return '<div class="ao" id="ao-' + a.id_ao + '"><div class="ao-h"><span class="id">' + a.id_ao + '</span><span class="sf">Sec_func ' + esc(a.sec_func) + '</span><span class="nm">' + esc(a.nombre_ao || a.finalidad) + '</span><span class="m num">S/ ' + fmt(apmA(a, YS[0])) + '</span><span class="st">' + chipAo(a) + '</span></div>' +
     '<div class="ao-b hidden">' +
     '<div class="ctx"><div><b>OEI</b>' + esc(a.oei) + '</div><div><b>AEI</b>' + esc(a.aei) + '</div><div><b>' + (a.tipo === 'Inversiones' ? 'Inversión' : 'Producto') + '</b>' + esc(a.producto) + (a.cui ? ' · <b style="display:inline">CUI</b> ' + esc(a.cui) : '') + '</div><div><b>Actividad / acción</b>' + esc(a.actividad_efp) + '</div><div><b>Finalidad</b>' + esc(a.finalidad) + '</div><div><b>Sec_func temporal</b>' + esc(a.sec_func) + '</div></div>' +
+    peiAoHtml(a) +
     '<h3>PM1 · Ficha de la actividad operativa multianual</h3>' +
     '<label>Actividad operativa o inversión</label><input class="inp f-nombre" value="' + esc(a.nombre_ao) + '">' +
     '<div class="grid2"><div><label>Descripción de la intervención</label><textarea class="inp f-desc">' + esc(a.descripcion) + '</textarea></div>' +
