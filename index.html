@@ -311,6 +311,12 @@ table.pnl tbody tr:hover td{background:var(--acc2)}
 .pei-t2 td.l{max-width:380px}
 .pei-li{font-size:12.5px;color:var(--ink2);margin:2px 0}
 .pei-li b{color:var(--acc)}
+/* Importación masiva */
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.bulk label.btn{cursor:pointer;display:inline-flex;align-items:center}
+.bulk .reg-h .acts{gap:8px}
+.bulk-t tr.b-dup td,.bulk-t tr.b-nopm td{color:var(--mut)}
+.bulk-t td .uo{max-width:340px}
 </style>
 </head>
 <body>
@@ -349,6 +355,7 @@ table.pnl tbody tr:hover td{background:var(--acc2)}
     <div id="tProg">
       <div class="kpis" id="kpis"></div>
       <p class="hint">Programación multianual (tres años) ajustada a la APM: ficha de la actividad (PM1), metas físicas por tarea (PM2) y recursos por partida (PM3). Lo que la propuesta del área no alcanza dentro del techo APM queda como <b>propuesta no priorizada</b>: no se pierde y sirve para la consistencia con el PIA.</p>
+      <div id="bulkBox" class="hidden"></div>
       <div id="aoList"></div>
     </div>
     <div id="tHist" class="hidden">
@@ -954,6 +961,185 @@ function descargarB3() {
   };
   if (S.data.pei && S.data.pei.length) go(S.data.pei); else { $('repMsg').className = 'msg bad'; $('repMsg').textContent = 'No se encontró la matriz del PEI.'; }
 }
+// ---------- Importación masiva (OPP) ----------
+S.bulk = null;
+function pintarBulk() {
+  if ($('bulkBox').dataset.on) return;
+  $('bulkBox').dataset.on = '1';
+  $('bulkBox').innerHTML = '<div class="panel bulk"><div class="reg-h"><div><h2>Importar Excel PM de varias áreas</h2><p class="sub">Elige la carpeta que contiene una subcarpeta por centro de costo (por ejemplo «7.- Programación Financiera» con DAAS, DFS, DO…). El portal lee todos los Excel con hojas PM 1, PM 2 y PM 3, toma el centro de costo del nombre de la carpeta y la actividad por su sec_func. Antes de guardar verás una vista previa.</p></div>' +
+    '<div class="acts"><label class="btn" for="fBulkDir">Elegir carpeta</label><input type="file" id="fBulkDir" webkitdirectory directory multiple class="vh"><label class="btn sec" for="fBulkFiles">Elegir archivos</label><input type="file" id="fBulkFiles" multiple accept=".xlsx,.xls,.xlsm" class="vh"></div></div>' +
+    '<div class="acts" style="margin:4px 0 0"><span class="msg" id="bulkMsg"></span></div><div id="bulkPrev"></div></div>';
+  $('fBulkDir').onchange = function () { leerBulk(this.files); this.value = ''; };
+  $('fBulkFiles').onchange = function () { leerBulk(this.files); this.value = ''; };
+}
+function ccDeRuta(ruta, centros) {
+  var segs = String(ruta || '').split('/').slice(0, -1).map(function (s) { return s.trim().toUpperCase(); });
+  for (var i = segs.length - 1; i >= 0; i--) { if (centros.indexOf(segs[i]) >= 0) return segs[i]; }
+  for (i = segs.length - 1; i >= 0; i--) { var m = centros.find(function (c) { return segs[i].indexOf(c + ' ') === 0 || segs[i].indexOf(c + '-') === 0 || segs[i].indexOf(c + '_') === 0; }); if (m) return m; }
+  return '';
+}
+function ccDeNombre(nombre) {
+  var n = norm(nombre); if (!n) return '';
+  var p = (S.data.panel || []).find(function (r) { return norm(r.uo) === n; }) || (S.data.panel || []).find(function (r) { return n.indexOf(norm(r.uo)) >= 0 || norm(r.uo).indexOf(n) >= 0; });
+  return p ? p.cc : '';
+}
+function leerArchivo(f) {
+  return new Promise(function (ok) { var rd = new FileReader(); rd.onload = function () { ok(rd.result); }; rd.onerror = function () { ok(null); }; rd.readAsArrayBuffer(f); });
+}
+function leerBulk(lista) {
+  var fs = Array.prototype.filter.call(lista || [], function (f) { return /\.(xlsx|xlsm|xls)$/i.test(f.name) && f.name.indexOf('~$') !== 0; });
+  if (!fs.length) { $('bulkMsg').className = 'msg bad'; $('bulkMsg').textContent = 'No se encontraron archivos Excel en la selección.'; return; }
+  var centros = (S.data.centros || []).map(function (c) { return String(c).toUpperCase(); });
+  S.bulk = { filas: [], datos: {} };
+  $('bulkPrev').innerHTML = ''; $('bulkMsg').className = 'msg';
+  cargarXlsx(function () {
+    var i = 0;
+    var sig = function () {
+      if (i >= fs.length) return prepararBulk();
+      var f = fs[i++], ruta = f.webkitRelativePath || f.name;
+      $('bulkMsg').textContent = 'Leyendo ' + i + ' de ' + fs.length + ': ' + ruta;
+      leerArchivo(f).then(function (buf) {
+        var fila = { ruta: ruta, nombre: f.name, fecha: f.lastModified || 0, cc: ccDeRuta(ruta, centros), est: '', msg: '' };
+        try {
+          if (!buf) throw new Error('No se pudo leer el archivo.');
+          var x = leerPM(XLSX.read(buf, { type: 'array' }));
+          fila.x = x; fila.sf = String(x.sec_func).replace(/\D/g, '').padStart(4, '0');
+          if (!fila.cc) fila.cc = ccDeNombre(x.centro);
+          if (!fila.cc) { fila.est = 'err'; fila.msg = 'No se reconoce el centro de costo (carpeta: ' + (ruta.split('/').slice(-2, -1)[0] || '—') + ').'; }
+        } catch (e) { fila.est = /hojas PM/.test(e.message) ? 'nopm' : 'err'; fila.msg = /hojas PM/.test(e.message) ? 'No es un formato PM (no tiene las hojas PM 1, PM 2 y PM 3).' : e.message; }
+        S.bulk.filas.push(fila); setTimeout(sig, 0);
+      });
+    };
+    sig();
+  });
+}
+function prepararBulk() {
+  var ccs = S.bulk.filas.filter(function (f) { return f.cc && !f.est; }).map(function (f) { return f.cc; }).filter(function (v, i, a) { return a.indexOf(v) === i; });
+  var i = 0;
+  var sig = function () {
+    if (i >= ccs.length) return validarBulk();
+    var cc = ccs[i++]; $('bulkMsg').textContent = 'Consultando la APM de ' + cc + ' (' + i + ' de ' + ccs.length + ')…';
+    api('datos', { cc: cc }).then(function (d) { S.bulk.datos[cc] = d.ok ? d : { error: d.error || 'No se pudo consultar.' }; sig(); }).catch(function () { S.bulk.datos[cc] = { error: 'Sin conexión.' }; sig(); });
+  };
+  sig();
+}
+function repartirBulk(x, ps, ao) {
+  var ok = [], dem = [];
+  x.recursos.forEach(function (r) {
+    var c = ps.filter(function (p) { return p.clasificador === r.clasificador; });
+    if (r.ff) { var ffc = r.ff.replace(/\D/g, '').slice(0, 1); var c2 = c.filter(function (p) { return p.ff.split('-')[0] === ffc; }); if (c2.length) c = c2; }
+    if (c.length) ok.push({ src: r, llave: c[0].llave, y: JSON.parse(JSON.stringify(r.y)) });
+    else dem.push({ src: r, llave: '', motivo: 'Clasificador fuera de la APM', y: JSON.parse(JSON.stringify(r.y)) });
+  });
+  var excesos = {};
+  ps.forEach(function (p) {
+    YS.forEach(function (y) {
+      var its = ok.filter(function (o) { return o.llave === p.llave; }), tot = r2(its.reduce(function (s, o) { return s + o.y[y].reduce(function (u, v) { return u + v; }, 0); }, 0)), apm = apmP(p, y);
+      if (tot <= apm || !tot) return;
+      var f = apm / tot, cel = [];
+      its.forEach(function (o) { o.y[y] = o.y[y].map(function (v, m) { var n = Math.floor(v * f * 100) / 100; if (v) cel.push([o, m]); return n; }); });
+      var falta = r2(apm - its.reduce(function (s, o) { return s + o.y[y].reduce(function (u, v) { return u + v; }, 0); }, 0));
+      if (cel.length && falta) { var c0 = cel[cel.length - 1]; c0[0].y[y][c0[1]] = r2(c0[0].y[y][c0[1]] + falta); }
+      its.forEach(function (o) { var e = o.src.y[y].map(function (v, m) { return r2(v - o.y[y][m]); }); if (e.some(function (v) { return v > 0; })) { var k = o.src.clasificador + '|' + o.src.nombre; excesos[k] = excesos[k] || { src: o.src, llave: o.llave, motivo: 'Excede la APM de la partida', y: nuevoY() }; excesos[k].y[y] = e; } });
+    });
+  });
+  Object.keys(excesos).forEach(function (k) { dem.push(excesos[k]); });
+  return { ok: ok, dem: dem };
+}
+function validarBulk() {
+  var vistos = {};
+  S.bulk.filas.forEach(function (f) {
+    if (f.est) return;
+    var d = S.bulk.datos[f.cc];
+    if (!d || d.error) { f.est = 'err'; f.msg = (d && d.error) || 'No se pudo consultar ' + f.cc + '.'; return; }
+    var a = (d.aos || []).find(function (o) { return String(o.sec_func).padStart(4, '0') === f.sf; });
+    if (!a) { f.est = 'err'; f.msg = 'El sec_func ' + f.sf + ' no corresponde a ninguna actividad de ' + f.cc + '.'; return; }
+    f.ao = a; f.rep = repartirBulk(f.x, (d.partidas || []).filter(function (p) { return p.id_ao === a.id_ao; }), a);
+    var tot = function (arr) { return r2(arr.reduce(function (s, r) { return s + r.y[YS[0]].reduce(function (u, v) { return u + v; }, 0); }, 0)); };
+    f.prop = r2(f.x.recursos.reduce(function (s, r) { return s + r.y[YS[0]].reduce(function (u, v) { return u + v; }, 0); }, 0)); f.prio = tot(f.rep.ok); f.nopri = tot(f.rep.dem); f.techo = r2(a['apm_' + YS[0]] || 0);
+    var reg = d.registro && d.registro.estado;
+    f.est = 'ok'; f.sel = true; f.msg = reg && reg !== 'EN REGISTRO' ? 'Registro del área: ' + reg.toLowerCase() + ' (OPP puede importar igual).' : ''; f.msgReg = f.msg;
+    (vistos[a.id_ao] = vistos[a.id_ao] || []).push(f);
+  });
+  Object.keys(vistos).forEach(function (k) {
+    var g = vistos[k]; if (g.length < 2) return;
+    var win = g.reduce(function (m, f) { return f.fecha > m.fecha ? f : m; }, g[0]);
+    elegirBulk(win, ' (el más reciente)');
+  });
+  $('bulkMsg').textContent = '';
+  pintarPrevBulk();
+}
+function elegirBulk(win, nota) {
+  S.bulk.filas.forEach(function (f) {
+    if (!f.ao || f.ao.id_ao !== win.ao.id_ao || (f.est !== 'ok' && f.est !== 'dup')) return;
+    if (f === win) { f.est = 'ok'; f.sel = true; f.msg = f.msgReg || ''; }
+    else { f.msgReg = f.msgReg != null ? f.msgReg : (f.est === 'ok' ? f.msg : ''); f.est = 'dup'; f.sel = false; f.msg = 'Otra versión para la misma actividad (' + win.ao.id_ao + '). Se usa ' + win.nombre + (nota || '') + '. Marca esta casilla si prefieres este archivo.'; }
+  });
+}
+function pintarPrevBulk() {
+  var fs = S.bulk.filas, n = function (e) { return fs.filter(function (f) { return f.est === e; }).length; };
+  var sel = fs.filter(function (f) { return f.est === 'ok' && f.sel; });
+  var orden = { ok: 0, dup: 1, err: 2, nopm: 3, hecho: 0, falla: 2 };
+  var filas = fs.slice().sort(function (a, b) { return (orden[a.est] - orden[b.est]) || String(a.cc).localeCompare(String(b.cc)) || a.ruta.localeCompare(b.ruta); });
+  var chip = { ok: '<span class="chip info">Listo</span>', dup: '<span class="chip neu">Duplicado</span>', err: '<span class="chip bad">Revisar</span>', nopm: '<span class="chip neu">No es PM</span>', hecho: '<span class="chip ok">Importado</span>', falla: '<span class="chip bad">Error</span>' };
+  $('bulkPrev').innerHTML = '<p class="hint">' + fs.length + ' archivos leídos · <b>' + n('ok') + ' listos</b>' + (n('dup') ? ' · ' + n('dup') + ' duplicados' : '') + (n('err') ? ' · ' + n('err') + ' por revisar' : '') + (n('nopm') ? ' · ' + n('nopm') + ' sin formato PM' : '') + (n('hecho') ? ' · ' + n('hecho') + ' importados' : '') + (n('falla') ? ' · ' + n('falla') + ' con error' : '') + '. Cada importación reemplaza la programación de la actividad (queda en el Historial).</p>' +
+    '<div class="tw"><table class="pnl bulk-t"><thead><tr><th></th><th class="l">Archivo</th><th>Centro de costo</th><th class="l">Actividad</th><th>Tareas · recursos</th><th>Propuesta ' + YS[0] + '</th><th>Techo APM</th><th>Priorizado</th><th>No priorizado</th><th>Estado</th></tr></thead><tbody>' +
+    filas.map(function (f) {
+      var i = fs.indexOf(f), puede = f.est === 'ok' || f.est === 'dup';
+      return '<tr class="b-' + f.est + '"><td><input type="checkbox" data-b="' + i + '"' + (puede && f.sel ? ' checked' : '') + (puede ? '' : ' disabled') + ' aria-label="Importar ' + esc(f.nombre) + '"></td>' +
+        '<td class="l"><b>' + esc(f.nombre) + '</b><div class="uo">' + esc(f.ruta) + '</div></td><td>' + esc(f.cc || '—') + '</td>' +
+        '<td class="l">' + (f.ao ? '<b>' + esc(f.ao.id_ao) + '</b> · sec_func ' + esc(f.sf) + '<div class="uo">' + esc(f.ao.nombre_ao || f.ao.finalidad || '') + '</div>' : (f.sf ? 'sec_func ' + esc(f.sf) : '—')) + '</td>' +
+        '<td class="num nw">' + (f.x ? f.x.tareas.length + ' · ' + f.x.recursos.length : '—') + '</td>' +
+        '<td class="num">' + (f.ao ? fmt(f.prop) : '—') + '</td><td class="num">' + (f.ao ? fmt(f.techo) : '—') + '</td><td class="num">' + (f.ao ? fmt(f.prio) : '—') + '</td><td class="num">' + (f.ao && f.nopri ? fmt(f.nopri) : '—') + '</td>' +
+        '<td>' + chip[f.est] + (f.msg ? '<div class="uo">' + esc(f.msg) + '</div>' : '') + '</td></tr>';
+    }).join('') + '</tbody></table></div>' +
+    '<div class="acts"><button class="btn" type="button" id="bBulkGo"' + (sel.length ? '' : ' disabled') + '>Importar ' + sel.length + (sel.length === 1 ? ' archivo' : ' archivos') + '</button><button class="btn sec" type="button" id="bBulkX">Cancelar</button><span class="msg" id="bulkRes"></span></div>';
+  $('bulkPrev').querySelectorAll('[data-b]').forEach(function (c) { c.onchange = function () { var f = fs[+c.dataset.b]; if (f.est === 'dup' && c.checked) elegirBulk(f, ' (elegido por ti)'); else f.sel = c.checked; pintarPrevBulk(); }; });
+  $('bBulkX').onclick = function () { S.bulk = null; $('bulkPrev').innerHTML = ''; $('bulkMsg').textContent = ''; };
+  $('bBulkGo').onclick = importarBulk;
+}
+function payloadBulk(f) {
+  var d = S.bulk.datos[f.cc], a = f.ao, id = a.id_ao, x = f.x;
+  var libresT = (d.tareas || []).filter(function (t) { return t.id_ao === id && t.id; }).map(function (t) { return t.id; });
+  var libresR = (d.recursos || []).filter(function (r) { return r.id_ao === id && r.id; }).map(function (r) { return r.id; });
+  var cods = x.tareas.map(function (t) { return t.codigo; });
+  var pm2 = x.tareas.map(function (t) {
+    var hijos = cods.some(function (c) { return c.indexOf(t.codigo + '.') === 0; });
+    return { id: libresT.shift() || '', codigo: t.codigo, nombre: t.nombre, repr: t.repr, acum: t.acum, um: t.um || a.unidad_medida, y: t.y, eliminar: false,
+             propio: hijos && YS.some(function (y) { return t.y[y].some(function (v) { return v; }); }) };
+  });
+  var pm3 = f.rep.ok.map(function (o) { var r = o.src; return { id: libresR.shift() || '', tarea: r.tarea, nombre: r.nombre, um: r.um, llave: o.llave, prev: r.prev, cant: r.cant, y: o.y, eliminar: false, demanda: false, ff: '', clasificador: '' }; })
+    .concat(f.rep.dem.map(function (o) { var r = o.src; return { id: libresR.shift() || '', tarea: r.tarea, nombre: r.nombre + ' — ' + o.motivo.toLowerCase(), um: r.um, llave: o.llave, prev: r.prev, cant: r.cant, y: o.y, eliminar: false, demanda: true, ff: r.ff || '', clasificador: r.clasificador }; }));
+  libresT.forEach(function (i) { pm2.push({ id: i, codigo: '0', nombre: '', repr: false, acum: false, um: '', y: nuevoY(), eliminar: true }); });
+  libresR.forEach(function (i) { pm3.push({ id: i, tarea: '', nombre: '', um: '', llave: '', prev: '', cant: {}, y: nuevoY(), eliminar: true }); });
+  var pa1 = { nombre_ao: x.pm1.nombre_ao || a.nombre_ao, descripcion: x.pm1.descripcion || a.descripcion, beneficiarios: x.pm1.beneficiarios || a.beneficiarios,
+              indicador: x.pm1.indicador || a.indicador, medio: x.pm1.medio || a.medio, unidad_medida: x.pm1.unidad_medida || a.unidad_medida };
+  return { cc: f.cc, id_ao: id, origen: 'Importado', pa1: pa1, pm2: pm2, pm3: pm3 };
+}
+function importarBulk() {
+  var cola = S.bulk.filas.filter(function (f) { return f.est === 'ok' && f.sel; });
+  if (!cola.length) return;
+  if (!confirm('Se reemplazará la programación de ' + cola.length + (cola.length === 1 ? ' actividad' : ' actividades') + ' con los archivos seleccionados. Cada cambio queda en el Historial.\n\n¿Continuar?')) return;
+  $('bBulkGo').disabled = true; $('bBulkX').disabled = true;
+  var i = 0, oks = 0, errs = 0;
+  var sig = function () {
+    if (i >= cola.length) {
+      $('bulkRes').className = 'msg ' + (errs ? 'bad' : 'ok'); $('bulkRes').textContent = 'Listo: ' + oks + ' importados' + (errs ? ', ' + errs + ' con error' : '') + '.';
+      $('bBulkX').disabled = false; $('bBulkX').textContent = 'Cerrar';
+      cargar();
+      return;
+    }
+    var f = cola[i++]; $('bulkRes').className = 'msg'; $('bulkRes').textContent = 'Importando ' + i + ' de ' + cola.length + ': ' + f.cc + ' · ' + f.ao.id_ao + '…';
+    var p;
+    try { p = payloadBulk(f); } catch (e) { f.est = 'falla'; f.msg = e.message; errs++; pintarPrevBulk(); $('bBulkGo').disabled = true; return sig(); }
+    api('guardarAO', p).then(function (j) {
+      if (j.ok) { f.est = 'hecho'; oks++; f.msg = (j.avisos && j.avisos.length) ? j.avisos.length + ' aviso(s): ' + j.avisos.slice(0, 2).join(' ') : 'Cuadra con la APM.'; }
+      else { f.est = 'falla'; errs++; f.msg = j.error || 'No se pudo guardar.'; }
+      pintarPrevBulk(); $('bBulkGo').disabled = true; $('bBulkX').disabled = true; sig();
+    }).catch(function () { f.est = 'falla'; errs++; f.msg = 'Sin conexión.'; pintarPrevBulk(); sig(); });
+  };
+  sig();
+}
 function soloLectura() {
   var ro = S.periodo && S.periodo.estado === 'CERRADO', bn = $('roBan');
   if (!bn) { bn = document.createElement('div'); bn.id = 'roBan'; bn.className = 'panel'; bn.style.cssText = 'background:var(--warnbg);border-color:var(--warn);color:var(--warn);font-weight:500'; $('app').querySelector('main').insertBefore(bn, $('app').querySelector('main').firstChild); }
@@ -1111,7 +1297,8 @@ function pintarPanel() {
 }
 function pintarProg() {
   var d = S.data;
-  if (S.sesion.rol === 'OPP' && !S.cc) { pintarPanel(); return; }
+  $('bulkBox').classList.toggle('hidden', !(S.sesion.rol === 'OPP' && !S.cc));
+  if (S.sesion.rol === 'OPP' && !S.cc) { pintarBulk(); pintarPanel(); return; }
   pintarKpis();
   var imp = S.sesion.rol === 'OPP' && S.cc ? '<div class="panel imp"><b>Importar Excel PM (PM1, PM2, PM3)</b> <span class="hint">Carga el archivo que entregó el área; reemplaza la programación de la actividad que coincida por sec_func.</span><div class="acts"><input type="file" id="fImp" accept=".xlsx,.xls"><span class="msg" id="impMsg"></span></div><div id="impPrev"></div></div>' : '';
   if (!d.aos.length) { $('aoList').innerHTML = '<p class="empty">' + (S.sesion.rol === 'OPP' ? 'Elige un centro de costo arriba.' : 'No hay actividades registradas para tu centro de costo.') + '</p>'; return; }
