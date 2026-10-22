@@ -317,6 +317,31 @@ table.pnl tbody tr:hover td{background:var(--acc2)}
 .bulk .reg-h .acts{gap:8px}
 .bulk-t tr.b-dup td,.bulk-t tr.b-nopm td{color:var(--mut)}
 .bulk-t td .uo{max-width:340px}
+/* NMP: Anexos 01, 02 y 03 */
+.n-add{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:4px 0 12px}
+.n-add select{flex:1;min-width:220px;max-width:640px;padding:7px 8px;border:1px solid var(--line);border-radius:8px;background:#fff}
+.n-ao{border:1px solid var(--line);border-left:4px solid var(--acc);border-radius:10px;padding:12px 14px;margin:0 0 14px;background:#fff}
+.n-ao-h{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.n-ao-h b{color:var(--ink)} .n-ao-h .sp{flex:1}
+.n-ao h4{margin:14px 0 6px}
+.n-t td,.n-t th{padding:4px 5px}
+.n-t td input.mi{width:74px}
+.n-t tr.tar td{background:#EEF3F8;font-weight:600;color:var(--ink)} .n-t tr.tar td.l{background:#EEF3F8}
+.n-t td.vig{color:var(--mut);font-size:11px}
+.n-t tr.chg td.l{box-shadow:inset 3px 0 0 var(--amb),1px 0 0 var(--line)}
+.n-t td .sub2{display:block;font-size:11px;color:var(--mut);font-weight:400}
+.n-t td.pos{color:var(--ok);font-weight:600} .n-t td.neg{color:var(--bad);font-weight:600}
+.n-t td input.tx2{width:100%;min-width:150px;padding:4px 6px;border:1px solid var(--line);border-radius:5px;font-size:12px}
+.n-t td select{max-width:200px}
+.n-fis{margin-top:10px;border:1px solid var(--line);border-radius:8px}
+.n-fis summary{padding:8px 12px;cursor:pointer;font-weight:500;color:var(--ink2)}
+.n-fis[open] summary{border-bottom:1px solid var(--line)}
+.n-fis>.tw,.n-fis>p{margin:10px}
+.a01 th{white-space:normal;vertical-align:bottom}
+.a01 tr.tot td{font-weight:600;background:#F6F8FA}
+.a01 caption{caption-side:top;text-align:left;font-weight:600;padding:8px 6px;color:var(--ink)}
+.lst .it .acc2{display:flex;gap:6px;margin-left:8px}
+td input.mi.bad{border-color:var(--bad);background:var(--badbg)}
 </style>
 </head>
 <body>
@@ -376,22 +401,22 @@ table.pnl tbody tr:hover td{background:var(--acc2)}
     <div id="tNmp" class="hidden">
       <div class="panel hidden" id="pBandeja">
         <h2>Bandeja OPP · solicitudes por revisar</h2>
-        <p class="sub">Todas las áreas. Al aprobar, el crédito y la anulación pasan al saldo de cada partida.</p>
+        <p class="sub">Todas las áreas. Al aprobar, el crédito y la anulación pasan al saldo de cada partida y los Anexos 02 y 03 actualizan la PM2 y la PM3 del área.</p>
         <div class="lst bnd" id="nBandeja"></div>
       </div>
       <div class="panel">
         <h2>Nueva solicitud de modificación presupuestaria</h2>
-        <p class="sub">Anexos 01, 02 y 03 NMP. Por cada fuente, el total de créditos debe ser igual al de anulaciones, y cada anulación no puede superar el saldo por certificar.</p>
-        <div class="nrow nhead"><span>Partida (AO · fuente · clasificador)</span><span>Crédito S/</span><span>Anulación S/</span><span>Meta física después</span><span></span></div>
-        <div id="nRows"></div>
-        <button class="btn sec sm" id="bAddRow" type="button">+ Agregar partida</button>
-        <h3>Cuadre por fuente de financiamiento</h3>
-        <div class="tw"><table class="cuadre"><thead><tr><th class="l">Fuente</th><th>Créditos</th><th>Anulaciones</th><th>Diferencia</th></tr></thead><tbody id="nCuadre"></tbody></table></div>
+        <p class="sub" id="nSub">Programación del año 1. Elige las actividades, modifica sus recursos (Anexo 03) y, si cambia la meta, sus tareas (Anexo 02). El Anexo 01 se arma solo: por cada fuente, los créditos deben igualar a las anulaciones y ninguna anulación puede superar el saldo por certificar.</p>
+        <div class="n-add"><select id="nSelAo" aria-label="Actividad operativa"></select><button class="btn sec sm" id="bAddRow" type="button">+ Agregar actividad</button></div>
+        <div id="nAos"></div>
+        <h3>Anexo 01 · Solicitud por partida</h3>
+        <p class="hint" style="margin:0 0 8px">Crédito o anulación de cada partida = variación de sus recursos en el Anexo 03. PIM inicial = APM + NMP aprobadas; certificado = CCP aprobadas.</p>
+        <div id="nA01"></div>
         <div class="grid2">
-          <div><label for="sC">Justificación y sustento técnico del crédito</label><textarea class="inp" id="sC"></textarea></div>
-          <div><label for="sA">Justificación y sustento técnico de la anulación</label><textarea class="inp" id="sA"></textarea></div>
+          <div><label for="sC">Justificación y sustento técnico del crédito solicitado</label><textarea class="inp" id="sC"></textarea></div>
+          <div><label for="sA">Justificación y sustento técnico de la anulación solicitada</label><textarea class="inp" id="sA"></textarea></div>
         </div>
-        <div class="acts"><button class="btn" id="bSendNmp" type="button">Enviar a OPP</button><span class="msg" id="nMsg"></span></div>
+        <div class="acts"><button class="btn" id="bSendNmp" type="button">Enviar a OPP</button><button class="btn sec" id="bBorNmp" type="button">Descargar borrador (Excel)</button><span class="msg" id="nMsg"></span></div>
         <ul class="det" id="nDet"></ul>
       </div>
       <div class="panel">
@@ -1202,7 +1227,8 @@ function totT(t, y) { var v = valT(t, y); return t.acum ? r2(v.reduce(function (
 function reprAnio(id, y) { return r2(tareasDe(id).filter(function (t) { return t.repr && t.codigo.indexOf('.') < 0; }).reduce(function (s, t) { return s + totT(t, y); }, 0)); }
 function totR(r, y) { return r2(r.y[y].reduce(function (a, b) { return a + (Number(b) || 0); }, 0)); }
 function progPartida(id, llave, y) { return r2(recursosDe(id).filter(function (r) { return r.llave === llave; }).reduce(function (s, r) { return s + totR(r, y); }, 0)); }
-function apmP(p, y) { return r2(p['apm_' + y]); }
+// Año 1: el techo es la APM más las NMP aprobadas (PIM vigente)
+function apmP(p, y) { return r2(y === YS[0] && p.programado_vigente != null ? p.programado_vigente : p['apm_' + y]); }
 function apmA(a, y) { return r2(a['apm_' + y]); }
 function progAo(id, y) { return r2(recursosDe(id).reduce(function (s, r) { return s + totR(r, y); }, 0)); }
 
@@ -1626,78 +1652,591 @@ function aplicarImport(x, a) {
   guardarAo(a, 'Importado', function (ok, err) { $('impRes').className = 'msg ' + (ok ? 'ok' : 'bad'); $('impRes').textContent = ok ? 'Importado en ' + id + '. Revisa los avisos de cuadre en la actividad.' : (err || 'No se pudo importar.'); });
 }
 
-function opcionesPartida(sel) {
-  var aoNom = {}; S.data.aos.forEach(function (a) { aoNom[a.id_ao] = a.nombre_ao || a.finalidad; });
-  var grupos = {};
-  S.data.partidas.forEach(function (p) { (grupos[p.id_ao] = grupos[p.id_ao] || []).push(p); });
-  return '<option value="">Elige una partida…</option>' + Object.keys(grupos).map(function (id) {
-    return '<optgroup label="' + esc(id + ' · ' + aoNom[id]) + '">' + grupos[id].map(function (p) {
-      var disp = p.saldo - p.anulacion_en_revision;
-      return '<option value="' + esc(p.llave) + '"' + (p.llave === sel ? ' selected' : '') + '>' + esc('FF' + p.ff.split('-')[0] + ' · ' + p.clasificador + ' · ' + p.concepto + ' · saldo S/ ' + fmt(disp)) + '</option>';
-    }).join('') + '</optgroup>';
+// ---------- NMP: Anexos 01, 02 y 03 (año 1 del periodo) ----------
+function nmpEstado() {
+  var key = (S.sesion && S.sesion.usuario) + '|' + S.cc + '|' + S.per;
+  if (!S.nmp || S.nmp.key !== key) S.nmp = { key: key, aos: [], rec: {}, nuevos: [], fis: {} };
+  return S.nmp;
+}
+function nAoNom(a) { return a ? (a.nombre_ao || a.finalidad || '') : ''; }
+function sum12(m) { return r2(m.reduce(function (a, b) { return a + (Number(b) || 0); }, 0)); }
+function totAcum(m, acum) { return acum ? sum12(m) : Math.max.apply(null, [0].concat(m.map(function (v) { return Number(v) || 0; }))); }
+function igual(a, b) { return a.every(function (v, i) { return r2(v) === r2(b[i]); }); }
+function fmtIn(v) { return v ? fmt2(v) : ''; }
+function recVig(r) { return (r.y[YS[0]] || ceros()).map(function (v) { return Number(v) || 0; }); }
+function recAct(r) { var e = S.nmp.rec[r.id]; return e ? e.m : recVig(r); }
+function cantVig(r) { return String((r.cant || {})[YS[0]] || ''); }
+function cantAct(r) { var e = S.nmp.rec[r.id]; return e ? e.cant : cantVig(r); }
+function tarVig(t) { return (t.y[YS[0]] || ceros()).map(function (v) { return Number(v) || 0; }); }
+function tareaCod(id, c) { return tareasDe(id).find(function (t) { return t.codigo === c; }); }
+function partidaDe(llave) { return S.data.partidas.find(function (p) { return p.llave === llave; }); }
+function nRecs(id) { return recursosDe(id).filter(function (r) { return r.id; }); }
+function nTars(id) { return tareasDe(id).filter(function (t) { return t.id; }); }
+
+// Programación física después de la NMP: los padres sin valor propio suman a sus hijos
+function fisDesp(id) {
+  var ts = nTars(id), out = {}, prof = function (c) { return String(c).split('.').length; };
+  ts.forEach(function (t) { var e = S.nmp.fis[t.id]; out[t.codigo] = (e ? e.m : tarVig(t)).slice(); });
+  ts.slice().sort(function (a, b) { return prof(b.codigo) - prof(a.codigo); }).forEach(function (t) {
+    var hs = ts.filter(function (h) { return padre(h.codigo) === t.codigo; });
+    if (hs.length && !t.propio) out[t.codigo] = ceros().map(function (_, k) { return r2(hs.reduce(function (s, h) { return s + (Number(out[h.codigo][k]) || 0); }, 0)); });
+  });
+  return out;
+}
+function fisCambia(id) { return nTars(id).some(function (t) { return S.nmp.fis[t.id]; }); }
+function metaDesp(id) {
+  var a = aoDe(id), ant = Number(a['meta_' + YS[0]]) || 0;
+  if (!fisCambia(id)) return ant;
+  var o = fisDesp(id);
+  return r2(nTars(id).filter(function (t) { return t.repr && t.codigo.indexOf('.') < 0; }).reduce(function (s, t) { return s + totAcum(o[t.codigo], t.acum); }, 0));
+}
+
+// Anexo 01: crédito o anulación por partida = variación neta de sus recursos (Anexo 03)
+function nmpNetos() {
+  var st = S.nmp, net = {};
+  st.aos.forEach(function (id) {
+    nRecs(id).forEach(function (r) { var d = r2(sum12(recAct(r)) - sum12(recVig(r))); if (d) net[r.llave] = r2((net[r.llave] || 0) + d); });
+  });
+  st.nuevos.forEach(function (n) { if (n.llave && st.aos.indexOf(n.id_ao) >= 0) net[n.llave] = r2((net[n.llave] || 0) + sum12(n.m)); });
+  return net;
+}
+function filasA01() {
+  var net = nmpNetos(), out = [];
+  S.data.partidas.forEach(function (p) {
+    var n = net[p.llave]; if (!n) return;
+    var a = aoDe(p.id_ao) || {};
+    out.push({ id_ao: p.id_ao, ff: p.ff, rubro: p.rubro, clasificador: p.clasificador, sec_func: a.sec_func || '', categoria: a.programa || '',
+      producto: a.cod_producto || '', actividad: String(a.actividad_efp || '').split('.')[0], finalidad: a.finalidad || '', um: a.unidad_medida || '',
+      meta_antes: Number(a['meta_' + YS[0]]) || 0, meta_despues: metaDesp(p.id_ao),
+      pim: Number(p.programado_vigente) || 0, certificado: Number(p.certificado) || 0, saldo: Number(p.saldo) || 0,
+      disp: r2((Number(p.saldo) || 0) - (Number(p.anulacion_en_revision) || 0)), credito: Math.max(n, 0), anulacion: Math.max(-n, 0) });
+  });
+  return out;
+}
+function porFuente(fs) { var g = [], ix = {}; fs.forEach(function (f) { if (!(f.ff in ix)) { ix[f.ff] = g.length; g.push({ ff: f.ff, filas: [] }); } g[ix[f.ff]].filas.push(f); }); return g; }
+function pintarA01() {
+  var fs = filasA01(), box = $('nA01');
+  if (!fs.length) { box.innerHTML = '<p class="empty">Aún no hay variaciones: cambia los montos de los recursos en el Anexo 03.</p>'; return; }
+  box.innerHTML = porFuente(fs).map(function (g) {
+    var T = { pim: 0, cert: 0, sal: 0, c: 0, a: 0 };
+    var rows = g.filas.map(function (f) {
+      T.pim += f.pim; T.cert += f.certificado; T.sal += f.saldo; T.c += f.credito; T.a += f.anulacion;
+      var exc = f.anulacion > f.disp, ent = (f.credito + f.anulacion) % 1 !== 0, mc = f.meta_antes !== f.meta_despues;
+      return '<tr><td class="l">' + esc(f.id_ao) + '<span class="sub2">Sec_func ' + esc(f.sec_func) + ' · ' + esc([f.categoria, f.producto, f.actividad].join(' · ')) + '</span></td>' +
+        '<td class="mono" style="text-align:left">' + esc(f.clasificador) + '</td><td class="num' + (mc ? ' dn' : '') + '">' + fmt2(f.meta_antes) + (mc ? ' → ' + fmt2(f.meta_despues) : '') + '</td>' +
+        '<td class="num">' + fmt2(f.pim) + '</td><td class="num">' + fmt2(f.certificado) + '</td><td class="num">' + fmt2(f.saldo) + '</td>' +
+        '<td class="num d0">' + (f.credito ? fmt2(f.credito) : '') + '</td><td class="num' + (exc ? ' dn' : '') + '">' + (f.anulacion ? fmt2(f.anulacion) : '') + '</td>' +
+        '<td class="num">' + fmt2(r2(f.pim + f.credito - f.anulacion)) + '</td>' +
+        '<td style="text-align:left">' + (exc ? '<span class="chip bad">Supera el saldo disponible (S/ ' + fmt2(f.disp) + ')</span>' : ent ? '<span class="chip bad">Debe ser monto entero</span>' : '') + '</td></tr>';
+    }).join('');
+    var d = r2(T.c - T.a);
+    return '<div class="tw" style="margin-bottom:10px"><table class="a01"><caption>Fuente: ' + esc(g.ff) + '</caption><thead><tr><th class="l">Actividad</th><th style="text-align:left">Clasificador</th><th>Meta física</th><th>PIM inicial (a)</th><th>Certificado (b)</th><th>Saldo c = a−b</th><th>Crédito (d)</th><th>Anulación (e)</th><th>PIM final a+d−e</th><th></th></tr></thead><tbody>' + rows +
+      '<tr class="tot"><td class="l">Total</td><td></td><td></td><td class="num">' + fmt2(T.pim) + '</td><td class="num">' + fmt2(T.cert) + '</td><td class="num">' + fmt2(T.sal) + '</td><td class="num">' + fmt2(T.c) + '</td><td class="num">' + fmt2(T.a) + '</td><td class="num">' + fmt2(r2(T.pim + T.c - T.a)) + '</td>' +
+      '<td style="text-align:left">' + (d === 0 ? '<span class="chip ok">Cuadra: PIM inicial = PIM final</span>' : '<span class="chip bad">Diferencia S/ ' + fmt2(d) + '</span>') + '</td></tr></tbody></table></div>';
   }).join('');
 }
-function filaNmp() {
-  var d = document.createElement('div'); d.className = 'nrow';
-  d.innerHTML = '<select class="np">' + opcionesPartida('') + '</select><input class="nc num" inputmode="numeric" placeholder="0"><input class="na num" inputmode="numeric" placeholder="0"><input class="nm" placeholder="opcional"><button class="x" type="button" aria-label="Quitar">×</button>';
-  d.querySelector('.x').onclick = function () { d.remove(); cuadre(); };
-  d.querySelectorAll('select,input').forEach(function (el) { el.oninput = cuadre; el.onchange = cuadre; });
-  $('nRows').appendChild(d);
+
+// Anexo 03: recursos de la actividad, agrupados por tarea
+function opcPartidas(id, sel) {
+  return '<option value="">Partida…</option>' + partidasDe(id).map(function (p) {
+    return '<option value="' + esc(p.llave) + '"' + (p.llave === sel ? ' selected' : '') + '>' + esc('FF' + String(p.ff).split('-')[0] + ' · ' + p.clasificador + ' · ' + p.concepto) + '</option>';
+  }).join('');
 }
-function leerFilas() {
-  return Array.prototype.map.call(document.querySelectorAll('#nRows .nrow'), function (r) {
-    return { llave: r.querySelector('.np').value, credito: r.querySelector('.nc').value.replace(/[,\s]/g, ''), anulacion: r.querySelector('.na').value.replace(/[,\s]/g, ''), meta_despues: r.querySelector('.nm').value };
-  });
+function opcTareas(id, sel) {
+  return '<option value="">Tarea…</option>' + nTars(id).map(function (t) {
+    return '<option value="' + esc(t.codigo) + '"' + (t.codigo === sel ? ' selected' : '') + '>' + esc(t.codigo + ' ' + String(t.nombre).slice(0, 50)) + '</option>';
+  }).join('');
 }
-function cuadre() {
-  var porF = {};
-  leerFilas().forEach(function (f) {
-    var p = S.data.partidas.find(function (x) { return x.llave === f.llave; }); if (!p) return;
-    var t = porF[p.ff] = porF[p.ff] || { c: 0, a: 0 };
-    t.c += pn(f.credito) || 0; t.a += pn(f.anulacion) || 0;
+function celdasMes(m, cls, ro) { return m.map(function (v, k) { return '<td><input class="mi ' + cls + '" data-m="' + k + '" value="' + fmtIn(v) + '" inputmode="decimal" aria-label="' + MES[k] + '"' + (ro ? ' readonly tabindex="-1"' : '') + '></td>'; }).join(''); }
+function celdaVar(d) { return '<td class="num n-var ' + (d > 0 ? 'pos' : d < 0 ? 'neg' : '') + '">' + (d ? (d > 0 ? '+' : '−') + fmt2(Math.abs(d)) : '') + '</td>'; }
+function htmlA03(id) {
+  var st = S.nmp, rs = nRecs(id), cods = [];
+  rs.forEach(function (r) { if (cods.indexOf(r.tarea) < 0) cods.push(r.tarea); });
+  cods.sort(cmpCod);
+  var head = '<thead><tr><th class="l">Tarea / recurso</th><th>Cant. vigente</th><th>Cant. actualizada</th>' + MES.map(function (m) { return '<th>' + m + '</th>'; }).join('') + '<th>Vigente S/</th><th>Actualizado S/</th><th>Variación S/</th><th></th></tr></thead>';
+  var body = cods.map(function (c) {
+    var t = tareaCod(id, c);
+    return '<tr class="tar"><td class="l">' + esc(c + ' ' + (t ? t.nombre : '(tarea no encontrada)')) + '</td><td colspan="18"></td></tr>' +
+      rs.filter(function (r) { return r.tarea === c; }).map(function (r) {
+        var p = partidaDe(r.llave) || {}, vig = recVig(r), act = recAct(r);
+        return '<tr data-r="' + esc(r.id) + '"' + (st.rec[r.id] ? ' class="chg"' : '') + '><td class="l">' + esc(r.nombre) + '<span class="sub2">' + esc((p.clasificador || r.clasificador) + ' · FF' + String(p.ff || r.ff).split('-')[0] + (p.concepto ? ' · ' + p.concepto : '')) + '</span></td>' +
+          '<td class="vig num">' + esc(cantVig(r)) + '</td><td><input class="cx n-cant" value="' + esc(cantAct(r)) + '" aria-label="Cantidad actualizada"></td>' +
+          celdasMes(act, 'n-m') + '<td class="num vig">' + fmt2(sum12(vig)) + '</td><td class="num n-tot">' + fmt2(sum12(act)) + '</td>' + celdaVar(r2(sum12(act) - sum12(vig))) + '<td></td></tr>';
+      }).join('');
+  }).join('');
+  var nv = st.nuevos.filter(function (n) { return n.id_ao === id; });
+  if (nv.length) {
+    body += '<tr class="tar"><td class="l">Recursos nuevos</td><td colspan="18"></td></tr>' + nv.map(function (n) {
+      return '<tr data-n="' + esc(n.k) + '" class="chg"><td class="l"><input class="tx2 n-nom" placeholder="Descripción del recurso" value="' + esc(n.nombre) + '">' +
+        '<span class="sub2"><select class="n-par" aria-label="Partida">' + opcPartidas(id, n.llave) + '</select> <select class="n-tar" aria-label="Tarea">' + opcTareas(id, n.tarea) + '</select> <input class="sx n-um" placeholder="Unidad" value="' + esc(n.um) + '"></span></td>' +
+        '<td class="vig num">—</td><td><input class="cx n-cant" value="' + esc(n.cant) + '" aria-label="Cantidad"></td>' + celdasMes(n.m, 'n-m') +
+        '<td class="num vig">0</td><td class="num n-tot">' + fmt2(sum12(n.m)) + '</td>' + celdaVar(sum12(n.m)) + '<td><button class="del n-del" type="button" aria-label="Quitar recurso nuevo">×</button></td></tr>';
+    }).join('');
+  }
+  if (!body) body = '<tr><td class="l" colspan="19" style="color:var(--mut)">La actividad no tiene recursos guardados en la PM3.</td></tr>';
+  return '<div class="tw"><table class="n-t">' + head + '<tbody>' + body + '</tbody></table></div><div class="acts" style="margin-top:8px"><button class="btn sec sm n-addr" type="button">+ Recurso nuevo</button><span class="hint">Escribe el monto actualizado de cada mes. La diferencia con lo vigente es el crédito (+) o la anulación (−) de la partida.</span></div>';
+}
+
+// Anexo 02: tareas de la actividad (opcional)
+function htmlA02(id) {
+  var st = S.nmp, ts = nTars(id), a = aoDe(id), des = fisDesp(id), abierto = fisCambia(id);
+  if (!ts.length) return '';
+  var rows = ts.map(function (t) {
+    var hs = ts.some(function (h) { return padre(h.codigo) === t.codigo; }), calc = hs && !t.propio, lv = t.codigo.split('.').length;
+    var ant = tarVig(t), dsp = des[t.codigo], e = st.fis[t.id];
+    return '<tr data-t="' + esc(t.id) + '"' + (calc ? ' class="par"' : e ? ' class="chg"' : '') + '><td class="l">' + '&nbsp;'.repeat((lv - 1) * 3) + esc(t.codigo + ' ' + t.nombre) + '</td>' +
+      '<td class="c">' + (t.repr ? '✓' : '') + '</td><td class="c">' + (t.acum ? '✓' : '') + '</td><td>' + esc(t.um) + '</td>' +
+      '<td><input class="sx n-tipo" value="' + esc(e ? e.tipo : '') + '" placeholder="opcional" aria-label="Tipo de medida"></td>' +
+      celdasMes(dsp, 'n-fm', calc) + '<td class="num vig">' + fmt2(totAcum(ant, t.acum)) + '</td><td class="num n-ftot">' + fmt2(totAcum(dsp, t.acum)) + '</td></tr>';
+  }).join('');
+  var ma = Number(a['meta_' + YS[0]]) || 0, md = metaDesp(id);
+  return '<details class="n-fis"' + (abierto ? ' open' : '') + '><summary>Anexo 02 · Reprogramación física ' + YS[0] + ' (solo si cambia la meta o su calendario)</summary>' +
+    '<div class="tw"><table class="n-t"><thead><tr><th class="l">Actividad / tarea</th><th>Repr.</th><th>Acum.</th><th>Unidad</th><th>Tipo de medida</th>' + MES.map(function (m) { return '<th>' + m + '</th>'; }).join('') + '<th>Total vigente</th><th>Total actualizado</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
+    '<p class="hint">Meta física ' + YS[0] + ' (tareas representativas de primer nivel): <b class="n-meta">' + fmt2(ma) + (md !== ma ? ' → ' + fmt2(md) : '') + '</b> ' + esc(a.unidad_medida || '') + '. Las tareas padre que suman a sus hijas se calculan solas.</p></details>';
+}
+function htmlNAo(id) {
+  var a = aoDe(id);
+  return '<div class="n-ao" id="nao-' + esc(id) + '" data-ao="' + esc(id) + '"><div class="n-ao-h"><b>' + esc(id) + '</b><span>' + esc(nAoNom(a)) + '</span><span class="sf">Sec_func ' + esc(a.sec_func || '') + '</span><span class="sp"></span><button class="mini n-quitar" type="button">Quitar</button></div>' +
+    '<h4>Anexo 03 · Modificación de recursos ' + YS[0] + '</h4>' + htmlA03(id) + htmlA02(id) + '</div>';
+}
+function repintarAo(id) {
+  var box = $('nao-' + id); if (!box) return;
+  var fis = box.querySelector('.n-fis'), open = fis && fis.open;
+  box.outerHTML = htmlNAo(id);
+  if (open) { var n = $('nao-' + id).querySelector('.n-fis'); if (n) n.open = true; }
+}
+function refrescarFila(tr, vig, act) {
+  var d = r2(sum12(act) - sum12(vig));
+  tr.querySelector('.n-tot').textContent = fmt2(sum12(act));
+  tr.querySelector('.n-var').outerHTML = celdaVar(d);
+}
+function refrescarFis(id) {
+  var box = $('nao-' + id), des = fisDesp(id), a = aoDe(id);
+  box.querySelectorAll('tr[data-t]').forEach(function (tr) {
+    var t = S.data.tareas.find(function (x) { return x.id === tr.dataset.t; }), v = des[t.codigo];
+    if (tr.classList.contains('par')) tr.querySelectorAll('.n-fm').forEach(function (inp, k) { inp.value = fmtIn(v[k]); });
+    else tr.classList.toggle('chg', !!S.nmp.fis[t.id]);
+    tr.querySelector('.n-ftot').textContent = fmt2(totAcum(v, t.acum));
   });
-  var ks = Object.keys(porF);
-  $('nCuadre').innerHTML = ks.length ? ks.map(function (k) { var t = porF[k], d = t.c - t.a; return '<tr><td class="l">' + esc(k) + '</td><td class="num">' + fmt(t.c) + '</td><td class="num">' + fmt(t.a) + '</td><td class="num ' + (d === 0 ? 'd0' : 'dn') + '">' + fmt(d) + '</td></tr>'; }).join('') : '<tr><td class="l" colspan="4" style="color:var(--mut)">Agrega partidas para ver el cuadre.</td></tr>';
+  var ma = Number(a['meta_' + YS[0]]) || 0, md = metaDesp(id);
+  box.querySelector('.n-meta').textContent = fmt2(ma) + (md !== ma ? ' → ' + fmt2(md) : '');
+}
+function nmpInput(ev) {
+  var el = ev.target, st = S.nmp, tr = el.closest('tr'), box = el.closest('.n-ao');
+  if (!st || !tr || !box) return;
+  var ao = box.dataset.ao;
+  if (el.matches('.n-m, .n-fm')) { var x = pn(el.value); el.classList.toggle('bad', el.value.trim() !== '' && (isNaN(x) || x < 0)); }
+  var val = function () { var v = pn(el.value); return isNaN(v) || v < 0 ? 0 : r2(v); };
+  if (tr.dataset.r) {
+    var r = S.data.recursos.find(function (q) { return q.id === tr.dataset.r; }), vig = recVig(r);
+    var e = st.rec[r.id] || (st.rec[r.id] = { m: vig.slice(), cant: cantVig(r) });
+    if (el.classList.contains('n-m')) e.m[+el.dataset.m] = val();
+    if (el.classList.contains('n-cant')) e.cant = el.value.trim();
+    if (igual(e.m, vig) && e.cant === cantVig(r)) delete st.rec[r.id];
+    tr.classList.toggle('chg', !!st.rec[r.id]);
+    refrescarFila(tr, vig, recAct(r));
+  } else if (tr.dataset.n) {
+    var n = st.nuevos.find(function (q) { return q.k === tr.dataset.n; });
+    if (el.classList.contains('n-m')) n.m[+el.dataset.m] = val();
+    else if (el.classList.contains('n-nom')) n.nombre = el.value;
+    else if (el.classList.contains('n-um')) n.um = el.value;
+    else if (el.classList.contains('n-cant')) n.cant = el.value.trim();
+    else if (el.classList.contains('n-par')) n.llave = el.value;
+    else if (el.classList.contains('n-tar')) n.tarea = el.value;
+    refrescarFila(tr, ceros(), n.m);
+  } else if (tr.dataset.t) {
+    var t = S.data.tareas.find(function (q) { return q.id === tr.dataset.t; }), ant = tarVig(t);
+    var f = st.fis[t.id] || (st.fis[t.id] = { m: ant.slice(), tipo: '' });
+    if (el.classList.contains('n-fm')) f.m[+el.dataset.m] = val();
+    if (el.classList.contains('n-tipo')) f.tipo = el.value.trim();
+    if (igual(f.m, ant) && !f.tipo) delete st.fis[t.id];
+    refrescarFis(ao);
+  }
+  pintarA01();
+}
+$('nAos').addEventListener('input', nmpInput);
+$('nAos').addEventListener('change', nmpInput);
+$('nAos').addEventListener('click', function (ev) {
+  var b = ev.target.closest('button'), st = S.nmp; if (!b || !st) return;
+  var ao = b.closest('.n-ao').dataset.ao;
+  if (b.classList.contains('n-quitar')) {
+    st.aos = st.aos.filter(function (x) { return x !== ao; });
+    nRecs(ao).forEach(function (r) { delete st.rec[r.id]; }); nTars(ao).forEach(function (t) { delete st.fis[t.id]; });
+    st.nuevos = st.nuevos.filter(function (n) { return n.id_ao !== ao; });
+    pintarNmpForm();
+  } else if (b.classList.contains('n-addr')) {
+    st.nuevos.push({ k: 'nn' + (++S.seq), id_ao: ao, llave: '', tarea: '', nombre: '', um: '', cant: '', m: ceros() });
+    repintarAo(ao);
+  } else if (b.classList.contains('n-del')) {
+    var k = b.closest('tr').dataset.n;
+    st.nuevos = st.nuevos.filter(function (n) { return n.k !== k; });
+    repintarAo(ao); pintarA01();
+  }
+});
+function pintarNmpForm() {
+  var st = nmpEstado(), vacio = !S.data.partidas.length;
+  st.aos = st.aos.filter(function (id) { return aoDe(id); });
+  $('nSelAo').innerHTML = '<option value="">' + (vacio ? 'No hay actividades con partidas' : 'Elige una actividad…') + '</option>' + S.data.aos.filter(function (a) {
+    return partidasDe(a.id_ao).length && st.aos.indexOf(a.id_ao) < 0;
+  }).map(function (a) { return '<option value="' + esc(a.id_ao) + '">' + esc(a.id_ao + ' · ' + nAoNom(a)) + '</option>'; }).join('');
+  $('nSelAo').disabled = vacio; $('bAddRow').disabled = vacio; $('bSendNmp').disabled = vacio; $('bBorNmp').disabled = vacio;
+  $('nAos').innerHTML = st.aos.map(htmlNAo).join('');
+  pintarA01();
 }
 function pintarNmp() {
-  $('nRows').innerHTML = ''; $('nMsg').textContent = ''; $('nDet').innerHTML = '';
+  $('nMsg').textContent = ''; $('nDet').innerHTML = '';
   if (S.flash) { $('nMsg').className = 'msg ok'; $('nMsg').textContent = S.flash; S.flash = null; }
-  var vacio = !S.data.partidas.length;
-  $('bAddRow').disabled = vacio; $('bSendNmp').disabled = vacio;
-  if (!vacio) { filaNmp(); filaNmp(); }
-  cuadre();
+  pintarNmpForm();
   var l = S.data.nmp;
   $('nList').innerHTML = l.length ? l.map(function (n) {
     var est = (n.estado || '').toUpperCase(), cls = est.indexOf('APROB') === 0 ? 'ok' : est.indexOf('OBSERV') === 0 ? 'bad' : 'info';
-    return '<div class="it"><div class="top"><b>' + esc(n.numero) + '</b><span class="hint">' + esc(n.fecha) + '</span><span class="chip ' + cls + '">' + esc(n.estado) + '</span><span class="sp" style="flex:1"></span><span class="num">S/ ' + fmt(n.credito) + '</span></div>' +
+    return '<div class="it"><div class="top"><b>' + esc(n.numero) + '</b><span class="hint">' + esc(n.fecha) + '</span><span class="chip ' + cls + '">' + esc(n.estado) + '</span>' + (n.version ? '<span class="hint">' + esc(n.version) + '</span>' : '') + '<span class="sp" style="flex:1"></span><span class="num">S/ ' + fmt(n.credito) + '</span>' +
+      '<span class="acc2"><button class="btn sec sm" type="button" data-xls="' + esc(n.numero) + '">Descargar anexos</button></span></div>' +
       '<div class="hint" style="margin-top:6px">' + n.filas.map(function (f) { return esc(f.id_ao + ' · ' + f.clasificador) + (f.credito ? ' <span class="d0">+' + fmt(f.credito) + '</span>' : ' <span class="dn">−' + fmt(f.anulacion) + '</span>'); }).join(' · ') + '</div>' +
       (n.observacion ? '<div class="hint" style="margin-top:4px">' + esc(n.observacion) + '</div>' : '') + '</div>';
   }).join('') : '<p class="empty">Aún no has enviado solicitudes.</p>';
+  enlazarXls($('nList'));
 }
-$('bAddRow').onclick = filaNmp;
-$('bSendNmp').onclick = function () {
-  var filas = leerFilas().filter(function (f) { return f.llave || f.credito || f.anulacion; });
-  var errs = [];
-  if (filas.length < 2) errs.push('Agrega al menos una partida de crédito y una de anulación.');
-  filas.forEach(function (f, i) {
-    if (!f.llave) errs.push('Fila ' + (i + 1) + ': elige la partida.');
-    var c = pn(f.credito) || 0, a = pn(f.anulacion) || 0;
-    if ((c > 0) === (a > 0)) errs.push('Fila ' + (i + 1) + ': indica crédito o anulación, no ambos.');
-    if (c % 1 || a % 1) errs.push('Fila ' + (i + 1) + ': los montos deben ser enteros.');
+$('bAddRow').onclick = function () {
+  var id = $('nSelAo').value; if (!id) { $('nSelAo').focus(); return; }
+  nmpEstado().aos.push(id); pintarNmpForm();
+};
+function nmpPayload() {
+  var st = S.nmp, en = function (id) { return st.aos.indexOf(id) >= 0; };
+  var recs = [], fis = [];
+  st.aos.forEach(function (id) {
+    nRecs(id).forEach(function (r) { var e = st.rec[r.id]; if (e) recs.push({ id_rec: r.id, m: e.m, cant: e.cant }); });
+    nTars(id).forEach(function (t) { var e = st.fis[t.id]; if (e) fis.push({ id_tarea: t.id, m: e.m, tipo: e.tipo }); });
   });
-  if ($('sC').value.trim().length < 20) errs.push('Completa el sustento del crédito.');
-  if ($('sA').value.trim().length < 20) errs.push('Completa el sustento de la anulación.');
+  return { recursos: recs, fisica: fis,
+    nuevos: st.nuevos.filter(function (n) { return en(n.id_ao); }).map(function (n) { return { id_ao: n.id_ao, llave: n.llave, tarea: n.tarea, nombre: n.nombre.trim(), um: n.um.trim(), cant: n.cant, m: n.m }; }) };
+}
+function nmpErrores() {
+  var st = S.nmp, errs = [], fs = filasA01();
+  if (!st || !st.aos.length) return ['Agrega al menos una actividad.'];
+  if (document.querySelector('#nAos input.bad')) errs.push('Hay montos no válidos (marcados en rojo).');
+  if (!fs.some(function (f) { return f.credito > 0; }) || !fs.some(function (f) { return f.anulacion > 0; })) errs.push('La NMP necesita al menos una partida con crédito y una con anulación: modifica los recursos del Anexo 03.');
+  fs.forEach(function (f) {
+    if ((f.credito + f.anulacion) % 1) errs.push(f.clasificador + ': la variación debe ser un monto entero.');
+    if (f.anulacion > f.disp) errs.push(f.clasificador + ': la anulación S/ ' + fmt2(f.anulacion) + ' supera el saldo disponible S/ ' + fmt2(f.disp) + '.');
+  });
+  porFuente(fs).forEach(function (g) {
+    var c = r2(g.filas.reduce(function (s, f) { return s + f.credito; }, 0)), a = r2(g.filas.reduce(function (s, f) { return s + f.anulacion; }, 0));
+    if (c !== a) errs.push('Fuente ' + g.ff + ': créditos S/ ' + fmt2(c) + ' y anulaciones S/ ' + fmt2(a) + ' deben ser iguales.');
+  });
+  st.nuevos.filter(function (n) { return st.aos.indexOf(n.id_ao) >= 0; }).forEach(function (n, i) {
+    if (!n.nombre.trim() || !n.llave || !n.tarea) errs.push('Recurso nuevo ' + (i + 1) + ': completa descripción, partida y tarea.');
+    if (!sum12(n.m)) errs.push('Recurso nuevo ' + (i + 1) + ': programa al menos un mes.');
+  });
+  if ($('sC').value.trim().length < 20) errs.push('Completa la justificación del crédito (mínimo 20 caracteres).');
+  if ($('sA').value.trim().length < 20) errs.push('Completa la justificación de la anulación (mínimo 20 caracteres).');
+  return errs;
+}
+$('bSendNmp').onclick = function () {
+  var errs = nmpErrores();
   $('nDet').innerHTML = errs.map(function (e) { return '<li>' + esc(e) + '</li>'; }).join('');
   if (errs.length) { $('nMsg').className = 'msg bad'; $('nMsg').textContent = 'Revisa la solicitud.'; return; }
   var btn = this; btn.disabled = true; $('nMsg').className = 'msg'; $('nMsg').textContent = 'Validando y enviando…';
-  api('enviarNMP', { filas: filas, sustento_credito: $('sC').value, sustento_anulacion: $('sA').value }).then(function (j) {
+  api('enviarNMP', Object.assign(nmpPayload(), { sustento_credito: $('sC').value, sustento_anulacion: $('sA').value })).then(function (j) {
     btn.disabled = false;
     if (!j.ok) { $('nMsg').className = 'msg bad'; $('nMsg').textContent = j.error || 'No se pudo enviar.'; $('nDet').innerHTML = (j.detalle || []).map(function (e) { return '<li>' + esc(e) + '</li>'; }).join(''); return; }
-    $('sC').value = ''; $('sA').value = '';
-    S.flash = j.numero + ' enviada a OPP por S/ ' + fmt(j.total) + '.';
+    $('sC').value = ''; $('sA').value = ''; S.nmp = null;
+    S.flash = j.numero + ' enviada a OPP por S/ ' + fmt(j.total) + '. Descarga sus anexos en "Mis solicitudes".';
     cargar();
   }).catch(function () { btn.disabled = false; $('nMsg').className = 'msg bad'; $('nMsg').textContent = 'Sin conexión: no se envió.'; });
 };
+// Borrador con el mismo formato que la NMP enviada
+function anexosBorrador() {
+  var st = S.nmp, d = new Date();
+  var D = { numero: '', cc: S.cc || (S.sesion && S.sesion.cc) || '', anio: YS[0], fecha: d.toLocaleDateString('es-PE'), estado: 'BORRADOR',
+    sustento_credito: $('sC').value, sustento_anulacion: $('sA').value, filas: filasA01(),
+    aos: st.aos.map(function (id) { var a = aoDe(id); return { id_ao: id, nombre: nAoNom(a), um: a.unidad_medida || '' }; }), fisica: [], recursos: [] };
+  st.aos.forEach(function (id) {
+    if (fisCambia(id)) {
+      var des = fisDesp(id);
+      nTars(id).forEach(function (t) { D.fisica.push({ id_ao: id, codigo: t.codigo, nombre: t.nombre, repr: t.repr, acum: t.acum, um: t.um, tipo: (st.fis[t.id] || {}).tipo || '', antes: tarVig(t), despues: des[t.codigo] }); });
+    }
+    nRecs(id).filter(function (r) { return st.rec[r.id]; }).forEach(function (r) {
+      var t = tareaCod(id, r.tarea), p = partidaDe(r.llave) || {};
+      D.recursos.push({ id_ao: id, tarea: r.tarea, tarea_nombre: t ? t.nombre : '', nombre: r.nombre, um: r.um, ff: p.ff || r.ff, clasificador: p.clasificador || r.clasificador,
+        cant_antes: cantVig(r), cant_despues: cantAct(r), antes: recVig(r), despues: recAct(r) });
+    });
+    st.nuevos.filter(function (n) { return n.id_ao === id; }).forEach(function (n) {
+      var t = tareaCod(id, n.tarea), p = partidaDe(n.llave) || {};
+      D.recursos.push({ id_ao: id, tarea: n.tarea, tarea_nombre: t ? t.nombre : '', nombre: n.nombre, um: n.um, ff: p.ff || '', clasificador: p.clasificador || '',
+        cant_antes: '', cant_despues: n.cant, antes: ceros(), despues: n.m });
+    });
+  });
+  return D;
+}
+$('bBorNmp').onclick = function () {
+  if (!S.nmp || !S.nmp.aos.length) { $('nMsg').className = 'msg bad'; $('nMsg').textContent = 'Agrega al menos una actividad.'; return; }
+  var btn = this; btn.disabled = true;
+  cargarExcelJS(function () { xlsNmp(anexosBorrador()).then(function () { btn.disabled = false; }, function () { btn.disabled = false; }); });
+};
+function enlazarXls(cont) {
+  cont.querySelectorAll('button[data-xls]').forEach(function (b) {
+    b.onclick = function () {
+      b.disabled = true;
+      api('nmpAnexos', { numero: b.dataset.xls }).then(function (j) {
+        if (!j.ok) { b.disabled = false; alert(j.error || 'No se pudo preparar los anexos.'); return; }
+        cargarExcelJS(function () { xlsNmp(j).then(function () { b.disabled = false; }, function () { b.disabled = false; }); });
+      }).catch(function () { b.disabled = false; });
+    };
+  });
+}
+
+// ---------- Excel de los anexos NMP con el formato oficial ----------
+var EXCELJS_URL = 'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js';
+function cargarExcelJS(cb) {
+  if (window.ExcelJS) return cb();
+  var s = document.createElement('script'); s.src = EXCELJS_URL; s.onload = cb;
+  s.onerror = function () { alert('No se pudo cargar el generador de Excel. Revisa tu conexión.'); document.querySelectorAll('button[data-xls], #bBorNmp').forEach(function (b) { b.disabled = false; }); };
+  document.head.appendChild(s);
+}
+function xlsNmp(D) {
+  var wb = new ExcelJS.Workbook(), NAVY = 'FF203764', AZUL = 'FF004D74', AZ2 = 'FF305496', CEL = 'FF8EA9DB', TOT = 'FFDDEBF7', GR = 'FFDBDBDB', GR2 = 'FFD9D9D9', BL = 'FFFFFFFF';
+  var NUM = '#,##0.00', CONT = '_-* #,##0.00_-;-* #,##0.00_-;_-* "-"??_-;_-@_-';
+  var TH = { style: 'thin', color: { argb: 'FF000000' } }, BOX = { top: TH, left: TH, bottom: TH, right: TH };
+  wb.creator = 'Portal POI · ATU'; wb.calcProperties.fullCalcOnLoad = true;
+  var colN = function (s) { return s.split('').reduce(function (n, ch) { return n * 26 + ch.charCodeAt(0) - 64; }, 0); };
+  var colL = function (n) { var s = ''; while (n > 0) { var m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); } return s; };
+  var nv = function (v) { return v === '' || v == null ? null : isNaN(+v) ? v : +v; };
+  function st(c, o) {
+    if (o.v !== undefined) c.value = o.v;
+    if (o.fill) c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: o.fill } };
+    c.font = { name: o.font || 'Calibri', size: o.size || 11, bold: !!o.b, italic: !!o.i, color: { argb: o.color || 'FF000000' } };
+    c.alignment = { horizontal: o.h || 'left', vertical: o.va || 'middle', wrapText: !!o.wrap };
+    if (o.fmt) c.numFmt = o.fmt;
+    if (o.box) c.border = BOX;
+    if (o.top) c.border = { top: TH };
+  }
+  // Da formato a un rango (y lo combina si merge); el valor va en la primera celda
+  function area(ws, ref, o, merge) {
+    var m = ref.match(/^([A-Z]+)(\d+)(?::([A-Z]+)(\d+))?$/), c1 = colN(m[1]), f1 = +m[2], c2 = m[3] ? colN(m[3]) : c1, f2 = m[4] ? +m[4] : f1;
+    for (var f = f1; f <= f2; f++) for (var c = c1; c <= c2; c++) { var oo = Object.assign({}, o); if (f !== f1 || c !== c1) delete oo.v; st(ws.getCell(f, c), oo); }
+    if (merge && (c1 !== c2 || f1 !== f2)) ws.mergeCells(f1, c1, f2, c2);
+    return ws.getCell(f1, c1);
+  }
+  function hoja(nombre, anchos) {
+    var ws = wb.addWorksheet(nombre, { views: [{ showGridLines: false }], pageSetup: { orientation: 'landscape', paperSize: 9, fitToPage: true, fitToWidth: 1, fitToHeight: 0, margins: { left: 0.3, right: 0.3, top: 0.4, bottom: 0.4, header: 0.2, footer: 0.2 } } });
+    anchos.forEach(function (w, i) { var c = ws.getColumn(i + 1); if (w) c.width = w; else { c.width = 10; c.hidden = true; } });
+    return ws;
+  }
+  function altoTexto(txt, cars) { return Math.max(1, String(txt || '').split('\n').reduce(function (s, l) { return s + Math.max(1, Math.ceil(l.length / cars)); }, 0)); }
+  var cc = D.cc || '', anio = D.anio || YS[0], aoNom = {};
+  (D.aos || []).forEach(function (a) { aoNom[a.id_ao] = a; });
+  var ordenAo = (D.aos || []).map(function (a) { return a.id_ao; });
+
+  // ===== ANEXO N° 01 =====
+  var w1 = hoja('ANEXO N° 01 NMP', [15.7, 11.6, 15.7, 15.7, 15.7, 0, 0, 0, 0, 4.4, 4.4, 4.4, 4.4, 4.4, 4.4, 12.5, 12.5, 12.5, 11.5, 11.5, 12.5]);
+  w1.getRow(2).height = 43.5;
+  area(w1, 'A2:U2', { fill: AZUL, h: 'center', wrap: true, box: true }, true).value = { richText: [
+    { text: 'ANEXO N° 01\n', font: { name: 'Calibri', size: 14, bold: true, color: { argb: BL } } },
+    { text: 'SOLICITUD DE NOTA MODIFICACIÓN PRESUPUESTARIA', font: { name: 'Calibri', size: 11, bold: true, color: { argb: BL } } }] };
+  area(w1, 'A4', { v: 'Unidad Ejecutora:', font: 'Arial', b: true });
+  area(w1, 'C4:O4', { v: '001: AUTORIDAD DE TRANSPORTE URBANO PARA LIMA Y CALLAO - ATU', font: 'Arial', b: true, box: true }, true);
+  area(w1, 'Q4:U4', { v: (D.numero ? 'N° ' + D.numero : 'BORRADOR') + ' · ' + cc + ' · ' + (D.fecha || ''), font: 'Arial', size: 9, h: 'right' }, true);
+  var fila = 5, H = { fill: GR, b: true, h: 'center', wrap: true, box: true };
+  var grupos = porFuente(D.filas || []);
+  if (!grupos.length) grupos = [{ ff: '', filas: [] }];
+  grupos.forEach(function (g) {
+    area(w1, 'A' + fila, { v: 'Fuente de Financiamiento*:', font: 'Arial', b: true });
+    area(w1, 'C' + fila + ':O' + fila, { v: g.ff, font: 'Arial', b: true, box: true }, true);
+    var h = fila + 2, h1 = h + 1, h2 = h + 2;
+    w1.getRow(h1).height = 27;
+    area(w1, 'A' + h + ':A' + h2, Object.assign({ v: 'Centro de Costo' }, H), true);
+    area(w1, 'B' + h + ':B' + h2, Object.assign({ v: 'Sec_func' }, H), true);
+    area(w1, 'C' + h + ':E' + h, Object.assign({ v: 'ESTRUCTURA FUNCIONAL PROGRAMATICA' }, H), true);
+    area(w1, 'C' + h1 + ':C' + h2, Object.assign({ v: 'CATEGORIA PRESUPUESTAL', size: 10 }, H), true);
+    area(w1, 'D' + h1 + ':D' + h2, Object.assign({ v: 'PRODUCTO/\nPROYECTO', size: 10 }, H), true);
+    area(w1, 'E' + h1 + ':E' + h2, Object.assign({ v: 'ACTIVIDAD/ACCION DE INVERSION', size: 10 }, H), true);
+    area(w1, 'F' + h + ':F' + h2, Object.assign({ v: 'FINALIDAD' }, H), true);
+    area(w1, 'G' + h + ':G' + h2, Object.assign({ v: 'Unidad de medida' }, H), true);
+    area(w1, 'H' + h + ':I' + h1, Object.assign({ v: 'Variación de meta física' }, H), true);
+    area(w1, 'H' + h2, Object.assign({ v: 'Antes' }, H)); area(w1, 'I' + h2, Object.assign({ v: 'Después' }, H));
+    area(w1, 'J' + h + ':O' + h1, Object.assign({ v: 'Clasificador de gastos' }, H), true);
+    ['TT', 'GG', 'SG', 'SGd', 'EG', 'Egd'].forEach(function (x, i) { area(w1, colL(10 + i) + h2, Object.assign({ v: x }, H)); });
+    area(w1, 'P' + h + ':P' + h1, Object.assign({ v: 'PIM\nInicial' }, H), true);
+    area(w1, 'Q' + h + ':Q' + h1, Object.assign({ v: 'Monto Certificado' }, H), true);
+    area(w1, 'R' + h + ':R' + h1, Object.assign({ v: 'Saldo por certificar' }, H), true);
+    area(w1, 'S' + h + ':T' + h, Object.assign({ v: 'Modificación**' }, H), true);
+    area(w1, 'S' + h1, Object.assign({ v: 'Crédito' }, H)); area(w1, 'T' + h1, Object.assign({ v: 'Anulación' }, H));
+    area(w1, 'U' + h + ':U' + h1, Object.assign({ v: 'PIM\nFinal' }, H), true);
+    ['(a)', '(b)', 'c = (a-b)', '(d)', '(e)', 'f = (a+d-e)'].forEach(function (x, i) { area(w1, colL(16 + i) + h2, { v: x, fill: GR, h: 'center', box: true }); });
+    var r0 = h2 + 1;
+    g.filas.forEach(function (f, i) {
+      var r = r0 + i, cs = String(f.clasificador || '').split('.');
+      [cc, f.sec_func, f.categoria, f.producto, f.actividad, f.finalidad, f.um, nv(f.meta_antes), nv(f.meta_despues)].concat([0, 1, 2, 3, 4, 5].map(function (k) { return cs[k] || ''; }))
+        .forEach(function (v, k) { area(w1, colL(k + 1) + r, { v: v, h: 'center', box: true }); });
+      area(w1, 'P' + r, { v: +f.pim || 0, fmt: NUM, h: 'right', box: true });
+      area(w1, 'Q' + r, { v: +f.certificado || 0, fmt: NUM, h: 'right', box: true });
+      area(w1, 'R' + r, { v: { formula: 'P' + r + '-Q' + r, result: r2((+f.pim || 0) - (+f.certificado || 0)) }, fmt: NUM, h: 'right', box: true });
+      area(w1, 'S' + r, { v: +f.credito || null, fmt: NUM, h: 'right', box: true });
+      area(w1, 'T' + r, { v: +f.anulacion || null, fmt: NUM, h: 'right', box: true });
+      area(w1, 'U' + r, { v: { formula: 'P' + r + '+S' + r + '-T' + r, result: r2((+f.pim || 0) + (+f.credito || 0) - (+f.anulacion || 0)) }, fmt: NUM, h: 'right', box: true });
+    });
+    var rt = r0 + g.filas.length;
+    area(w1, 'A' + rt + ':O' + rt, { v: 'Total', fill: GR, b: true, h: 'center', box: true }, true);
+    'PQRSTU'.split('').forEach(function (c) { area(w1, c + rt, { v: { formula: g.filas.length ? 'SUM(' + c + r0 + ':' + c + (rt - 1) + ')' : '0' }, b: true, fmt: NUM, h: 'right', box: true }); });
+    fila = rt + 2;
+  });
+  area(w1, 'A' + (fila - 1), { v: '* En caso la solicitud de modificación presupuestal involucre más de una fuente de financiamiento presentar un cuadro por cada fuente de financiamiento', size: 10, i: true });
+  area(w1, 'A' + fila, { v: '** La anulación no puede ser mayor al saldo disponible por cada clasificador de gastos. Además, los montos de crédito y anulación deben ser enteros.', size: 10, i: true });
+  w1.getCell('A' + (fila + 1)).value = { richText: [{ text: 'Nota', font: { name: 'Calibri', size: 10, bold: true, italic: true } }, { text: ' : A nivel totales, el PIM inicial debe ser igual al PIM final', font: { name: 'Calibri', size: 10, italic: true } }] };
+  fila += 3;
+  [['JUSTIFICACIÓN Y SUSTENTO TÉCNICO DEL CRÉDITO SOLICITADO (1)', D.sustento_credito], ['JUSTIFICACIÓN Y SUSTENTO TÉCNICO DE LA ANULACIÓN SOLICITADA (1)', D.sustento_anulacion]].forEach(function (j) {
+    area(w1, 'A' + fila + ':U' + fila, { v: j[0], fill: GR, b: true, box: true }, true);
+    var lin = altoTexto(j[1], 190);
+    for (var k = 1; k <= 3; k++) w1.getRow(fila + k).height = Math.max(15, Math.ceil(lin * 15 / 3));
+    area(w1, 'A' + (fila + 1) + ':U' + (fila + 3), { v: j[1] || '', font: 'Arial', size: 10, wrap: true, va: 'top', box: true }, true);
+    fila += 5;
+  });
+  area(w1, 'A' + (fila - 1), { v: '(1) Para el caso de modificaciones entre proyectos (Anulación y Habilitación), debe contener un Informe que detalle los requisitos establecidos en el artículo 11 de la Ley N° 31953 y su Lineamiento.', size: 10 });
+  fila += 1;
+  area(w1, 'A' + fila + ':U' + (fila + 1), { v: 'La aprobación de la nota de modificacion presupuestarias no convalida los actos y acciones que realice el area usuaria  con inobservancia de los requisitos esenciales y formalidades impuestas por las normas legales en la utilización de los recursos públicos asignados', fill: 'FFEDEDED', b: true, wrap: true, box: true }, true);
+  fila += 6;
+  area(w1, 'Q' + fila + ':U' + fila, { v: 'SELLO Y V° B° DEL/DE LA DIRECTOR/A - JEFE/A', h: 'center', top: true }, true);
+  area(w1, 'Q' + (fila + 1) + ':U' + (fila + 1), { v: '(Área Solicitante)', h: 'center' }, true);
+
+  // ===== ANEXO N° 02 =====
+  var w2 = hoja('ANEXO N° 02 NMP', [6, 5, 5, 55, 6, 8, 16, 16, 6.7, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 8, 10.1, 9.1, 7.6, 7.6, 7.6, 7.6, 7.6, 7.6, 7.6, 7.6, 7.6, 7.6, 7.6, 7.6, 8.3]);
+  w2.getRow(2).height = 18.8;
+  area(w2, 'A2:AJ2', { v: 'ANEXO NMP 02: REPROGRAMACIÓN FÍSICA ANUAL', fill: NAVY, color: BL, size: 14, b: true, h: 'center' }, true);
+  area(w2, 'A4', { v: 'Centro de Costo:', b: true }); area(w2, 'D4', { v: cc, box: true });
+  area(w2, 'H4', { v: 'PERIODO:', b: true }); area(w2, 'I4:K4', { v: anio, h: 'center', box: true }, true);
+  var H2 = { fill: GR2, b: true, h: 'center', wrap: true, box: true };
+  area(w2, 'A6:D7', Object.assign({ v: 'Actividad / Tareas / Acciones' }, H2), true);
+  area(w2, 'E6:E7', Object.assign({ v: 'Repr.*' }, H2), true); area(w2, 'F6:F7', Object.assign({ v: 'Acum.**' }, H2), true);
+  area(w2, 'G6:G7', Object.assign({ v: 'Unidad de medida' }, H2), true); area(w2, 'H6:H7', Object.assign({ v: 'Tipo de medida' }, H2), true);
+  area(w2, 'I6:U6', Object.assign({ v: 'Programación y ejecución física' }, H2), true);
+  area(w2, 'V6:W6', Object.assign({ v: 'MODIFICACIÓN' }, H2), true);
+  area(w2, 'X6:AJ6', Object.assign({ v: 'Programación y ejecución física' }, H2), true);
+  MES.concat('Total').forEach(function (m, k) { area(w2, colL(9 + k) + '7', Object.assign({ v: m }, H2)); area(w2, colL(24 + k) + '7', Object.assign({ v: m }, H2)); });
+  area(w2, 'V7', Object.assign({ v: 'Crédito' }, H2)); area(w2, 'W7', Object.assign({ v: 'Anulación' }, H2));
+  var f2 = 8, porAo2 = {};
+  (D.fisica || []).forEach(function (t) { (porAo2[t.id_ao] = porAo2[t.id_ao] || []).push(t); });
+  var aos2 = ordenAo.filter(function (id) { return porAo2[id]; }).concat(Object.keys(porAo2).filter(function (id) { return ordenAo.indexOf(id) < 0; }));
+  function filaMeses(ws, r, ant, dsp, acum, o) {
+    ant.forEach(function (v, k) { area(ws, colL(9 + k) + r, Object.assign({ v: +v || 0, h: 'right', box: true }, o)); });
+    dsp.forEach(function (v, k) { area(ws, colL(24 + k) + r, Object.assign({ v: +v || 0, h: 'right', box: true }, o)); });
+    var fn = acum ? 'SUM' : 'MAX', ta = totAcum(ant.map(Number), acum), td = totAcum(dsp.map(Number), acum);
+    area(ws, 'U' + r, Object.assign({}, o, { v: { formula: fn + '(I' + r + ':T' + r + ')', result: ta }, b: true, h: 'right', box: true }));
+    area(ws, 'AJ' + r, Object.assign({}, o, { v: { formula: fn + '(X' + r + ':AI' + r + ')', result: td }, b: true, h: 'right', box: true }));
+    area(ws, 'V' + r, Object.assign({}, o, { v: td > ta ? r2(td - ta) : null, h: 'right', box: true }));
+    area(ws, 'W' + r, Object.assign({}, o, { v: ta > td ? r2(ta - td) : null, h: 'right', box: true }));
+  }
+  if (!aos2.length) {
+    area(w2, 'A8:AJ8', { v: 'Esta solicitud no reprograma la meta física.', i: true, h: 'center', box: true }, true); f2 = 9;
+  }
+  aos2.forEach(function (id) {
+    var ts = porAo2[id].slice().sort(function (a, b) { return cmpCod(a.codigo, b.codigo); }), a = aoNom[id] || {};
+    var rep = ts.filter(function (t) { return t.repr && String(t.codigo).indexOf('.') < 0; });
+    var sumM = function (k) { return ceros().map(function (_, m) { return r2(rep.reduce(function (s, t) { return s + (+t[k][m] || 0); }, 0)); }); };
+    var oN = { fill: NAVY, color: BL, b: true };
+    area(w2, 'A' + f2 + ':AJ' + f2, Object.assign({ box: true }, oN));
+    area(w2, 'B' + f2 + ':D' + f2, Object.assign({ v: id + ' ' + (a.nombre || ''), wrap: true, box: true }, oN), true);
+    area(w2, 'G' + f2, Object.assign({ v: a.um || '', h: 'center', box: true }, oN));
+    w2.getRow(f2).height = 15 * altoTexto(id + ' ' + (a.nombre || ''), 62);
+    filaMeses(w2, f2, sumM('antes'), sumM('despues'), true, oN);
+    var ini = f2 + 1, n1 = null;
+    f2++;
+    ts.forEach(function (t) {
+      var lv = String(t.codigo).split('.').length, o = lv === 1 ? { fill: CEL } : {};
+      if (lv === 1) {
+        if (n1 !== null && f2 - 1 > n1) w2.mergeCells(n1 + 1, 2, f2 - 1, 2);
+        n1 = f2;
+        area(w2, 'B' + f2, Object.assign({ box: true }, o));
+        area(w2, 'C' + f2 + ':D' + f2, Object.assign({ v: t.codigo + ' ' + t.nombre, wrap: true, box: true }, o), true);
+      } else {
+        area(w2, 'B' + f2, { box: true });
+        area(w2, 'C' + f2, { v: t.codigo, h: 'center', box: true });
+        area(w2, 'D' + f2, { v: '   '.repeat(lv - 2) + t.nombre, wrap: true, box: true });
+      }
+      w2.getRow(f2).height = 15 * altoTexto(t.nombre, lv === 1 ? 66 : 58);
+      area(w2, 'E' + f2, Object.assign({ v: t.repr ? 'X' : '', h: 'center', box: true }, o));
+      area(w2, 'F' + f2, Object.assign({ v: t.acum ? 'X' : '', h: 'center', box: true }, o));
+      area(w2, 'G' + f2, Object.assign({ v: t.um || '', h: 'center', wrap: true, box: true }, o));
+      area(w2, 'H' + f2, Object.assign({ v: t.tipo || '', h: 'center', i: true, box: true }, o));
+      filaMeses(w2, f2, t.antes, t.despues, t.acum, o);
+      f2++;
+    });
+    if (n1 !== null && f2 - 1 > n1) w2.mergeCells(n1 + 1, 2, f2 - 1, 2);
+    if (f2 - 1 >= ini) { area(w2, 'A' + ini + ':A' + (f2 - 1), { box: true }, true); }
+  });
+  area(w2, 'A' + (f2 + 1), { v: '* Repr.: tarea representativa de la meta física.   ** Acum.: la meta se suma mes a mes (si no es acumulable, el total es el mayor valor mensual).', size: 10, i: true });
+
+  // ===== ANEXO N° 03 =====
+  var w3 = hoja('ANEXO N° 03 NMP', [2.9, 7.7, 9.3, 66.3, 10.9, 5.1, 11.4, 6.5, 11.4, 11.4, 11.4, 11.4, 11.4, 11.4, 11.4, 11.4, 11.4, 11.4, 11.4, 11.4, 13.6, 13.6, 12.3, 6.5, 12.6, 12.6, 12.6, 12.6, 12.6, 12.6, 12.6, 12.6, 12.6, 12.6, 12.6, 12.6, 12.6]);
+  w3.getRow(2).height = 18.8;
+  area(w3, 'B2:AK2', { v: 'ANEXO MP3: MODIFICACIÓN DE RECURSOS', fill: NAVY, color: BL, size: 14, b: true, h: 'center' }, true);
+  area(w3, 'B4', { v: 'Centro de Costo', b: true, size: 12 }); area(w3, 'D4:G4', { v: cc, b: true, h: 'center', box: true }, true);
+  area(w3, 'J4', { v: 'Periodo', b: true }); area(w3, 'L4:M4', { v: anio, size: 12, h: 'center', box: true }, true);
+  var H3 = { fill: GR2, b: true, size: 12, h: 'center', wrap: true, box: true };
+  area(w3, 'B6:D7', Object.assign({ v: 'Actividad / Tarea / Recurso' }, H3), true);
+  area(w3, 'E6:E7', Object.assign({ v: 'Unidad de medida' }, H3), true); area(w3, 'F6:F7', Object.assign({ v: 'FF' }, H3), true);
+  area(w3, 'G6:G7', Object.assign({ v: 'Clasificador' }, H3), true);
+  area(w3, 'H6:U6', Object.assign({ v: 'Programación Financiera Vigente' }, H3), true);
+  area(w3, 'V6:W6', Object.assign({ v: 'Modificación' }, H3), true);
+  area(w3, 'X6:AK6', Object.assign({ v: 'Programación Financiera Actualizada' }, H3), true);
+  ['Cant'].concat(MES, 'Total').forEach(function (m, k) { area(w3, colL(8 + k) + '7', Object.assign({ v: m }, H3)); area(w3, colL(24 + k) + '7', Object.assign({ v: m }, H3)); });
+  area(w3, 'V7', Object.assign({ v: 'Crédito' }, H3)); area(w3, 'W7', Object.assign({ v: 'Anulación' }, H3));
+  var f3 = 8, porAo3 = {}, filasTar = [];
+  (D.recursos || []).forEach(function (r) { (porAo3[r.id_ao] = porAo3[r.id_ao] || []).push(r); });
+  var aos3 = ordenAo.filter(function (id) { return porAo3[id]; }).concat(Object.keys(porAo3).filter(function (id) { return ordenAo.indexOf(id) < 0; }));
+  aos3.forEach(function (id) {
+    var a = aoNom[id] || {}, rs = porAo3[id], cods = [];
+    rs.forEach(function (r) { if (cods.indexOf(r.tarea) < 0) cods.push(r.tarea); });
+    cods.sort(cmpCod);
+    var oN = { fill: NAVY, color: BL, b: true, size: 12 };
+    area(w3, 'B' + f3 + ':AK' + f3, Object.assign({ box: true }, oN));
+    area(w3, 'C' + f3 + ':D' + f3, Object.assign({ v: id + ' ' + (a.nombre || ''), wrap: true, box: true }, oN), true);
+    w3.getRow(f3).height = Math.max(15.8, 15.8 * altoTexto(id + ' ' + (a.nombre || ''), 80));
+    var ini = ++f3;
+    cods.forEach(function (c) {
+      var its = rs.filter(function (r) { return r.tarea === c; }), ft = f3, d1 = ft + 1, d2 = ft + its.length, oT = { fill: AZ2, color: BL, b: true };
+      filasTar.push(ft);
+      area(w3, 'C' + ft, Object.assign({ v: c, h: 'center', box: true }, oT));
+      area(w3, 'D' + ft, Object.assign({ v: its[0].tarea_nombre || '', wrap: true, box: true }, oT));
+      w3.getRow(ft).height = Math.max(15.8, 15.8 * altoTexto(its[0].tarea_nombre, 72));
+      ['E', 'F', 'G', 'H', 'X'].forEach(function (k) { area(w3, k + ft, Object.assign({ box: true }, oT)); });
+      for (var k = 9; k <= 37; k++) {
+        if (k === 24) continue;
+        var L = colL(k);
+        area(w3, L + ft, Object.assign({ v: { formula: 'SUM(' + L + d1 + ':' + L + d2 + ')' }, fmt: k === 22 || k === 23 ? CONT : NUM, h: 'right', box: true }, oT));
+      }
+      its.forEach(function (r, i) {
+        var f = d1 + i, ta = sum12(r.antes.map(Number)), td = sum12(r.despues.map(Number));
+        area(w3, 'C' + f, { box: true, size: 12 });
+        area(w3, 'D' + f, { v: r.nombre, wrap: true, box: true, size: 12 });
+        w3.getRow(f).height = Math.max(15.8, 15.8 * altoTexto(r.nombre, 72));
+        area(w3, 'E' + f, { v: r.um || '', h: 'center', box: true, size: 12 });
+        area(w3, 'F' + f, { v: nv(String(r.ff || '').split('-')[0]), h: 'center', box: true, size: 12 });
+        area(w3, 'G' + f, { v: r.clasificador || '', h: 'center', box: true, size: 12 });
+        area(w3, 'H' + f, { v: nv(r.cant_antes), h: 'center', box: true, size: 12 });
+        area(w3, 'X' + f, { v: nv(r.cant_despues), h: 'center', box: true, size: 12 });
+        r.antes.forEach(function (v, m) { area(w3, colL(9 + m) + f, { v: +v || 0, fmt: NUM, h: 'right', box: true, size: 12 }); });
+        r.despues.forEach(function (v, m) { area(w3, colL(25 + m) + f, { v: +v || 0, fmt: NUM, h: 'right', box: true, size: 12 }); });
+        area(w3, 'U' + f, { v: { formula: 'SUM(I' + f + ':T' + f + ')', result: ta }, fmt: NUM, h: 'right', b: true, fill: TOT, box: true, size: 12 });
+        area(w3, 'AK' + f, { v: { formula: 'SUM(Y' + f + ':AJ' + f + ')', result: td }, fmt: NUM, h: 'right', b: true, fill: TOT, box: true, size: 12 });
+        area(w3, 'V' + f, { v: td > ta ? r2(td - ta) : null, fmt: CONT, h: 'right', box: true, size: 12 });
+        area(w3, 'W' + f, { v: ta > td ? r2(ta - td) : null, fmt: CONT, h: 'right', box: true, size: 12 });
+      });
+      f3 = d2 + 1;
+    });
+    if (f3 - 1 >= ini) area(w3, 'B' + ini + ':B' + (f3 - 1), { box: true }, true);
+  });
+  if (!aos3.length) { area(w3, 'B8:AK8', { v: 'Sin recursos modificados.', i: true, h: 'center', box: true }, true); f3 = 9; }
+  area(w3, 'B' + f3 + ':U' + f3, { v: 'Total', fill: GR, b: true, size: 12, box: true }, true);
+  ['V', 'W'].forEach(function (L) { area(w3, L + f3, { v: { formula: filasTar.length ? filasTar.map(function (r) { return L + r; }).join('+') : '0' }, fill: 'FFC9C9C9', b: true, size: 12, fmt: CONT, h: 'right', box: true }); });
+  area(w3, 'X' + f3 + ':AK' + f3, { fill: GR, box: true }, true);
+
+  return wb.xlsx.writeBuffer().then(function (buf) {
+    var blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), u = URL.createObjectURL(blob), a = document.createElement('a');
+    a.href = u; a.download = 'Anexos_NMP_' + (D.numero || 'borrador_' + cc) + '.xlsx'; document.body.appendChild(a); a.click();
+    setTimeout(function () { URL.revokeObjectURL(u); a.remove(); }, 1000);
+  });
+}
 
 // ---------- OPP: bandeja de NMP ----------
 function pintarBandeja() {
@@ -1707,13 +2246,14 @@ function pintarBandeja() {
   var l = S.data.bandeja || [];
   $('nBandeja').innerHTML = l.length ? l.map(function (n) {
     return '<div class="it"><div class="top"><b>' + esc(n.numero) + '</b><span class="chip info">' + esc(n.cc) + '</span><span class="hint">' + esc(n.fecha) + ' · ' + esc(n.solicitante || '') + '</span><span class="sp" style="flex:1"></span><span class="num">S/ ' + fmt(n.credito) + '</span>' +
-      '<span class="acc"><button class="btn sm" type="button" data-n="' + esc(n.numero) + '" data-e="APROBADO">Aprobar</button><button class="btn sec sm" type="button" data-n="' + esc(n.numero) + '" data-e="OBSERVADO">Observar</button></span></div></div>';
+      '<span class="acc"><button class="btn sec sm" type="button" data-xls="' + esc(n.numero) + '">Anexos</button><button class="btn sm" type="button" data-n="' + esc(n.numero) + '" data-e="APROBADO">Aprobar</button><button class="btn sec sm" type="button" data-n="' + esc(n.numero) + '" data-e="OBSERVADO">Observar</button></span></div></div>';
   }).join('') : '<p class="empty">No hay solicitudes pendientes.</p>';
+  enlazarXls($('nBandeja'));
   $('nBandeja').querySelectorAll('button[data-n]').forEach(function (b) {
     b.onclick = function () {
       var num = b.dataset.n, est = b.dataset.e, obs = '';
       if (est === 'OBSERVADO') { obs = prompt('Observación para el área (' + num + '):', ''); if (obs === null) return; }
-      else if (!confirm('¿Aprobar ' + num + '? El saldo de las partidas se actualizará.')) return;
+      else if (!confirm('¿Aprobar ' + num + '? Se actualizarán los saldos y la PM2/PM3 del área.')) return;
       b.disabled = true;
       api('resolverNMP', { numero: num, estado: est, observacion: obs }).then(function (j) {
         if (!j.ok) { b.disabled = false; alert(j.error || 'No se pudo registrar.'); return; }
