@@ -703,18 +703,21 @@ function leerCmn(file) {
         var wb = XLSX.read(fr.result, { type: 'array' }), out = null;
         for (var i = 0; i < wb.SheetNames.length && !(out && out.filas.length); i++) {
           var ws = wb.Sheets[wb.SheetNames[i]], rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: '', blankrows: false });
-          out = cmnPlantilla(rows) || cmnSiga(rows);
+          out = cmnPlantilla(rows) || cmnPlano(rows) || cmnSiga(rows);
         }
         if (!out || !out.filas.length) { $('cmnMsg').className = 'msg bad'; $('cmnMsg').textContent = 'No se encontraron ítems del CMN en el archivo (se busca la columna Clasificador con los meses, o el reporte mensualizado del SIGA).'; return; }
         var cc = $('cmnCc').value, an = $('cmnAn').value, faltan = [];
         out.filas.forEach(function (f) { if (cc) f.cc = cc; if (an) f.anio = an; f.cc = String(f.cc || '').toUpperCase(); });
-        if (out.filas.some(function (f) { return !f.cc; })) faltan.push('elige el centro de costo del archivo');
+        if (out.filas.some(function (f) { return !f.cc && !f.meta; })) faltan.push('elige el centro de costo del archivo');
         if (out.filas.some(function (f) { return YS.indexOf(String(f.anio)) < 0; })) faltan.push('elige el año (el archivo no lo indica o está fuera de ' + YS[0] + '–' + YS[2] + ')');
         S.cmnUp = { archivo: file.name, formato: out.formato, filas: out.filas };
-        var g = {}; out.filas.forEach(function (f) { var k = f.cc + ' · ' + f.anio; g[k] = g[k] || { n: 0, t: 0, sm: 0 }; g[k].n++; g[k].t += +f.total || 0; if (!f.meta) g[k].sm++; });
+        // Sin centro de costo (reporte plano del SIGA) se agrupa por área usuaria; la base asigna el centro por la meta
+        var g = {}; out.filas.forEach(function (f) { var k = f.cc || f.area || ('Meta ' + f.meta); g[k] = g[k] || { n: 0, sm: 0, porCc: !!f.cc, metas: {}, t: {} }; g[k].n++; g[k].t[f.anio] = (g[k].t[f.anio] || 0) + (+f.total || 0); if (!f.meta) g[k].sm++; else g[k].metas[f.meta] = 1; });
         var desc = (S.data.centros || []);
-        $('cmnPrev').innerHTML = '<p class="hint">Formato detectado: <b>' + esc(out.formato) + '</b> · ' + out.filas.length + ' ítems.</p><div class="tw"><table class="cmn-t"><thead><tr><th class="l">Centro de costo · año</th><th>Ítems</th><th>Total (S/)</th><th>Ítems sin meta</th><th></th></tr></thead><tbody>' +
-          Object.keys(g).map(function (k) { var cc0 = k.split(' · ')[0], ok = !desc.length || desc.indexOf(cc0) >= 0; return '<tr><td class="l">' + esc(k) + '</td><td class="num">' + g[k].n + '</td><td class="num">' + fmt2(g[k].t) + '</td><td class="num">' + g[k].sm + '</td><td>' + (ok ? '' : '<span class="chip warn">No existe en el POI</span>') + '</td></tr>'; }).join('') + '</tbody></table></div>';
+        $('cmnPrev').innerHTML = '<p class="hint">Formato detectado: <b>' + esc(out.formato) + '</b> · ' + out.filas.length + ' registros.' + (out.filas.some(function (f) { return !f.cc; }) ? ' Cada ítem se asigna al centro de costo de la actividad con su meta (sec_func); las metas que no estén en el POI se omiten y se listan al cargar.' : '') + '</p>' +
+          '<div class="tw"><table class="cmn-t"><thead><tr><th class="l">' + (out.filas.some(function (f) { return !f.cc; }) ? 'Área usuaria (SIGA) · metas' : 'Centro de costo') + '</th><th>Registros</th>' + YS.map(function (y) { return '<th>' + y + ' (S/)</th>'; }).join('') + '<th>Sin meta</th><th></th></tr></thead><tbody>' +
+          Object.keys(g).sort().map(function (k) { var x = g[k], ok = !x.porCc || !desc.length || desc.indexOf(k) >= 0, ms = Object.keys(x.metas).sort();
+            return '<tr><td class="l">' + esc(k) + (x.porCc ? '' : ' <span class="hint">meta ' + esc(ms.join(', ')) + '</span>') + '</td><td class="num">' + x.n + '</td>' + YS.map(function (y) { return '<td class="num">' + fmt2(x.t[y] || 0) + '</td>'; }).join('') + '<td class="num">' + x.sm + '</td><td>' + (ok ? '' : '<span class="chip warn">No existe en el POI</span>') + '</td></tr>'; }).join('') + '</tbody></table></div>';
         if (faltan.length) { $('cmnMsg').className = 'msg bad'; $('cmnMsg').textContent = 'Para cargar: ' + faltan.join('; ') + '.'; return; }
         $('cmnMsg').textContent = ''; $('bCmnUp').classList.remove('hidden');
       } catch (e) { $('cmnMsg').className = 'msg bad'; $('cmnMsg').textContent = 'No se pudo leer el archivo: ' + e.message; }
@@ -742,6 +745,34 @@ function cmnPlantilla(rows) {
                  tipo: c.ti >= 0 ? String(R[c.ti]).trim() : '', cant: c.ca >= 0 ? String(R[c.ca]).trim() : '', m: m, total: isNaN(to) ? r2(m.reduce(function (a, b) { return a + b; }, 0)) : to });
   }
   return { formato: 'Plantilla CMN', filas: filas };
+}
+// Reporte plano del SIGA («CMN mensualizado»): una fila por ítem con CLASIF_COD, META y MONT_01_ANO1…MONT_12_ANO4
+function cmnPlano(rows) {
+  var h = -1, up = function (x) { return String(x == null ? '' : x).trim().toUpperCase(); };
+  for (var i = 0; i < Math.min(rows.length, 10); i++) { var u = rows[i].map(up); if (u.indexOf('CLASIF_COD') >= 0 && u.indexOf('MONT_01_ANO1') >= 0) { h = i; break; } }
+  if (h < 0) return null;
+  var H = rows[h].map(up), c = function (k) { return H.indexOf(k); }, pad = function (v, n) { var t = String(v == null ? '' : v).trim(); return /^\d+$/.test(t) ? t.padStart(n, '0') : t; };
+  var cA = c('PROGR_ANO_1'), cMe = c('META'), cFf = c('FF'), cRb = c('RB'), cCl = c('CLASIF_COD'), cCd = c('CLASIF_NOMBRE'), cTb = c('TIPO_BIEN'), cAr = c('AUSUARIA_NOMBRE'),
+      cG = c('GRUPO_BIEN'), cC = c('CLASE_BIEN'), cF = c('FAMILIA_BIEN'), cI = c('ITEM_BIEN'), cNi = c('NOMBRE_ITEM'), cUm = c('UNIDAD_MEDIDA');
+  var anos = [1, 2, 3, 4].map(function (k) {
+    return { k: k, tot: c('MONT_TOT_ANO' + k), cant: c('CANT_TOT_ANO' + k), m: MES.map(function (_, q) { return c('MONT_' + String(q + 1).padStart(2, '0') + '_ANO' + k); }) };
+  }).filter(function (a) { return a.m[0] >= 0; });
+  var tipos = { B: 'BIEN', S: 'SERVICIO', O: 'OBRA' }, filas = [];
+  for (var r = h + 1; r < rows.length; r++) {
+    var R = rows[r], cl = String(R[cCl] == null ? '' : R[cCl]).trim(), a0 = parseInt(R[cA], 10);
+    if (!/^2/.test(cl) || isNaN(a0)) continue;
+    anos.forEach(function (a) {
+      var anio = String(a0 + a.k - 1); if (YS.indexOf(anio) < 0) return;
+      var m = a.m.map(function (j) { var v = pn(R[j]); return isNaN(v) ? 0 : v; }), to = pn(R[a.tot]);
+      if (isNaN(to)) to = r2(m.reduce(function (s, v) { return s + v; }, 0));
+      if (!to) return;
+      var tb = up(R[cTb]);
+      filas.push({ anio: anio, cc: '', area: String(R[cAr] || '').trim(), meta: String(R[cMe] == null ? '' : R[cMe]).trim(), ff: String(R[cFf] || '').trim(), rubro: pad(R[cRb], 2),
+                   clasificador: cl, clasificador_desc: String(R[cCd] || '').trim(), item: pad(R[cG], 2) + pad(R[cC], 2) + pad(R[cF], 4) + pad(R[cI], 4),
+                   desc: String(R[cNi] || '').trim(), unidad: String(R[cUm] || '').trim(), tipo: tipos[tb] || tb, cant: String(R[a.cant] == null ? '' : R[a.cant]).trim(), m: m, total: to });
+    });
+  }
+  return { formato: 'SIGA plano', filas: filas };
 }
 function cmnSiga(rows) {
   var ctx = { anio: '', meta: '', ff: '', rubro: '', cl: '', cd: '' }, desc = [], filas = [];
@@ -779,7 +810,7 @@ function subirCmn() {
     b.disabled = false;
     if (!j.ok) { $('cmnMsg').className = 'msg bad'; $('cmnMsg').textContent = j.error || 'No se pudo cargar.'; return; }
     S.cmnUp = null;
-    alert('CMN cargado: ' + j.items + ' ítems, S/ ' + fmt2(j.total) + '.' + (j.omitidos && j.omitidos.length ? '\nSe omitieron centros de costo que no existen en el POI: ' + j.omitidos.join(', ') + '.' : ''));
+    alert('CMN cargado: ' + j.items + ' ítems, S/ ' + fmt2(j.total) + '.' + (j.omitidos && j.omitidos.length ? '\nSe omitieron centros de costo o metas que no existen en el POI: ' + j.omitidos.join(', ') + '.' : ''));
     cargar();
   }).catch(function () { b.disabled = false; });
 }
@@ -1566,10 +1597,11 @@ function leerPM(wb) {
   var cU3 = p3[hr].findIndex(function (x) { return norm(x).indexOf('unidad') === 0; }), cFF = p3[hr].findIndex(function (x) { return norm(x) === 'ff'; }), cCl = p3[hr].findIndex(function (x) { return norm(x).indexOf('clasificador') === 0; }), cPv = p3[hr].findIndex(function (x) { return norm(x).indexOf('prevision') === 0; }), b3 = bloques(p3, hr), tareaAct = '1';
   for (i = hr + 2; i < p3.length; i++) {
     row = p3[i];
-    var cl = String(row[cCl] || '').trim(), cod3 = '', nom3 = '';
+    // Clasificador sin espacios ni puntos repetidos ("2.3.2 7.13 5" → 2.3.2.7.13.5)
+    var cl = String(row[cCl] || '').trim().replace(/[.\s]+/g, '.').replace(/^\.+|\.+$/g, ''), cod3 = '', nom3 = '';
     for (k = 2; k < cU3; k++) { if (String(row[k]).trim() !== '' && esCod(row[k])) { cod3 = codTxt(row[k]); for (q = k + 1; q < cU3; q++) if (String(row[q]).trim()) { nom3 = String(row[q]).trim(); break; } break; } }
     if (!cl) { if (cod3) tareaAct = cod3; continue; }
-    var r = { tarea: tareaAct, nombre: nom3 || cl, um: String(row[cU3]).trim(), ff: String(row[cFF] || '').trim(), clasificador: cl, prev: cPv >= 0 ? String(row[cPv]).trim() : '', cant: {}, y: nuevoY() };
+    var r = { tarea: tareaAct, nombre: nom3 || cl, um: String(row[cU3]).trim(), ff: /^(RO|0+)$/i.test(String(row[cFF] || '').trim()) ? '1-RECURSOS ORDINARIOS' : String(row[cFF] || '').trim(), clasificador: cl, prev: cPv >= 0 ? String(row[cPv]).trim() : '', cant: {}, y: nuevoY() };
     YS.forEach(function (y) { if (b3[y] !== undefined) { r.cant[y] = String(row[b3[y]]).trim(); r.y[y] = MES.map(function (m, x) { return r2(pn(row[b3[y] + 1 + x]) || 0); }); } else r.cant[y] = ''; });
     out.recursos.push(r);
   }
