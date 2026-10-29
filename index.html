@@ -492,7 +492,7 @@ $('fLogin').addEventListener('submit', function (ev) {
 $('bOut').onclick = function () { salir(''); };
 $('selCc').onchange = function () { S.cc = this.value; cargar(); };
 $('selPer').onchange = function () { S.per = +this.value; S.anio = {}; cargar(); };
-var HACC = { guardarAO: 'Guardó la programación', enviarNMP: 'Envió una solicitud NMP', resolverNMP: 'Resolvió una NMP', cerrarVersion: 'Cerró una versión', nuevoPeriodo: 'Abrió un nuevo periodo', cambiarClave: 'Cambió su contraseña', restablecerClave: 'Restableció una contraseña', directo: 'Carga directa en la base de datos' };
+var HACC = { guardarAO: 'Guardó la programación', enviarNMP: 'Envió una solicitud NMP', resolverNMP: 'Resolvió una NMP', cerrarVersion: 'Cerró una versión', nuevoPeriodo: 'Abrió un nuevo periodo', cambiarClave: 'Cambió su contraseña', restablecerClave: 'Restableció una contraseña', directo: 'Carga directa en la base de datos', cargarAPM: 'Cargó la APM del MEF', cargarCMN: 'Cargó el CMN' };
 var HCOLS = ['Fecha', 'Usuario', 'Acción', 'Origen', 'Centro de costo', 'Actividad', 'Sección', 'Registro', 'Descripción', 'Operación', 'Dato', 'Antes', 'Después'];
 S.hl = []; S.hOpen = {};
 function hFiltros() { return { usuario: $('hU').value, desde: $('hD').value, hasta: $('hH').value, q: $('hQ').value.trim() }; }
@@ -1321,7 +1321,7 @@ function pintarPanel() {
     (vis.length ? vis.map(function (r) { var p = pct(+r.prog_a1, +r.apm_a1); return '<tr data-cc="' + esc(r.cc) + '" title="' + esc(r.actualizado ? 'Última carga: ' + r.actualizado : 'Sin carga') + '"><td class="l"><b>' + esc(r.cc) + '</b><div class="uo">' + esc(r.uo) + '</div></td><td class="num">' + r.cargadas + ' de ' + r.aos + '<div class="uo">' + r.completas + (r.completas === 1 ? ' completa' : ' completas') + (r.sin_prioridad ? ' · ' + r.sin_prioridad + ' sin prioridad' : '') + '</div></td><td class="num">' + (+r.prog_a1 + +r.demanda_a1 ? fmt(+r.prog_a1 + +r.demanda_a1) : '—') + '</td><td class="num">' + fmt(r.apm_a1) + '</td><td class="num">' + fmt(r.prog_a1) + '</td><td><div class="av"><div class="bar"><i style="width:' + p + '%"></i></div><span class="num">' + pctTxt(+r.prog_a1, +r.apm_a1) + '</span></div></td><td class="num">' + (+r.demanda_a1 ? fmt(r.demanda_a1) : '—') + '</td><td>' + chipCmn(r) + '</td><td>' + chipReg(r.registro) + '</td><td>' + etq[estPanel(r)] + '</td></tr>'; }).join('')
       : '<tr><td class="l" colspan="10" style="color:var(--mut)">Ningún centro de costo coincide.</td></tr>') +
     '</tbody></table></div></div>' +
-    peiHtml() + calidadHtml() + prelacionHtml() +
+    peiHtml() + calidadHtml() + prelacionHtml() + apmHtml() +
     '<div class="panel"><h2>Versiones del POI</h2><p class="sub">Cierra una versión para congelar la programación tal como está (por ejemplo, al presentar el proyecto de ley). Sirve para comparar después con el PIA.</p>' +
     '<div class="lst">' + ((S.data.versiones || []).length ? S.data.versiones.map(function (v) { return '<div class="it"><div class="top"><b>' + esc(v.nombre) + '</b><span class="chip info">' + esc(v.etapa) + '</span><span class="hint">' + esc(v.fecha) + ' · ' + esc(v.por) + '</span><span class="sp" style="flex:1"></span><span class="num">Priorizado ' + YS[0] + ' S/ ' + fmt(v.priorizado_a1) + ' · No priorizado S/ ' + fmt(v.no_priorizado_a1) + '</span></div></div>'; }).join('') : '<p class="empty">Aún no hay versiones cerradas.</p>') + '</div>' +
     '<div class="acts ver-f"><label for="verEt">Etapa</label><select class="inp" id="verEt">' + ETAPAS_VER.map(function (e) { return '<option' + (e === etapaHoy().ver ? ' selected' : '') + '>' + e + '</option>'; }).join('') + '</select><button class="btn sec" type="button" id="bVer">Cerrar versión ahora</button><span class="msg" id="verMsg"></span></div></div>' +
@@ -1349,8 +1349,107 @@ function pintarPanel() {
   $('aoList').querySelectorAll('.pnl-f button').forEach(function (b) { b.onclick = function () { S.pf = b.dataset.f; pintarPanel(); }; });
   var qi = $('pnlQ'); qi.oninput = function () { S.pq = qi.value; var pos = qi.selectionStart; pintarPanel(); var n = $('pnlQ'); n.focus(); n.setSelectionRange(pos, pos); };
   $('aoList').querySelectorAll('.rl[data-cc]').forEach(function (d) { d.onclick = function () { S.cc = d.dataset.cc; cargar(); }; });
-  enlazarCalidad();
+  enlazarCalidad(); enlazarApm();
   $('aoList').querySelectorAll('tr[data-cc]').forEach(function (tr) { tr.onclick = function () { S.cc = tr.dataset.cc; cargar(); }; });
+}
+// ---------- OPP: APM del MEF (techos del periodo) ----------
+function apmHtml() {
+  if (!(S.periodo && S.periodo.estado === 'ACTIVO')) return '';
+  var st = S.apm || {};
+  return '<div class="panel" id="apmBox"><h2>APM del MEF · techos ' + YS[0] + '–' + YS[2] + '</h2><p class="sub">Carga el Excel del módulo de Programación Multianual (hoja DATA_APM: una fila por meta, rubro y clasificador con PRESUPUESTO, PRESUPUESTO 2 y PRESUPUESTO 3). Actualiza el techo de cada partida; las partidas que ya no figuran quedan en 0 y las metas nuevas crean su actividad si el archivo trae el centro de costo (columna S.UO). Primero verás el resumen: nada se guarda hasta que pulses Aplicar.</p>' +
+    '<div class="acts"><label class="btn sec" for="fApm">Elegir archivo APM</label><input type="file" id="fApm" accept=".xlsx,.xls" class="vh"><span class="msg' + (st.mal ? ' bad' : '') + '" id="apmMsg">' + esc(st.msg || '') + '</span></div>' +
+    (st.res ? apmResumen(st) : '') + '</div>';
+}
+function apmResumen(st) {
+  var r = st.res, P = r.partidas, T = r.totales, dif = function (a, b) { var d = r2(+a - +b); return '<span class="' + (d > 0 ? 'd0' : d < 0 ? 'dn' : '') + '">' + (d > 0 ? '+' : '') + fmt(d) + '</span>'; };
+  var h = '<div class="cmn-k">' + [['Filas del archivo', r.filas], ['Partidas sin cambio', P.iguales], ['Partidas que cambian', P.cambian], ['Partidas nuevas', P.nuevas], ['Partidas que pasan a 0', P.a_cero]].map(function (k) { return '<div><span>' + k[0] + '</span><b>' + k[1] + '</b></div>'; }).join('') + '</div>';
+  h += '<div class="tw"><table><thead><tr><th class="l">Techo APM total</th>' + YS.map(function (y) { return '<th>' + y + ' (S/)</th>'; }).join('') + '</tr></thead><tbody>' +
+    '<tr><td class="l">Antes</td>' + T.antes.map(function (v) { return '<td class="num">' + fmt(v) + '</td>'; }).join('') + '</tr>' +
+    '<tr><td class="l">Archivo</td>' + T.archivo.map(function (v) { return '<td class="num">' + fmt(v) + '</td>'; }).join('') + '</tr>' +
+    '<tr><td class="l">Variación</td>' + T.archivo.map(function (v, i) { return '<td class="num">' + dif(v, T.antes[i]) + '</td>'; }).join('') + '</tr></tbody></table></div>';
+  if (r.por_cc.length) h += '<h3>Centros de costo con cambios</h3><div class="tw"><table><thead><tr><th class="l">Centro de costo</th>' + YS.map(function (y) { return '<th>' + y + ' antes</th><th>' + y + ' nuevo</th>'; }).join('') + '</tr></thead><tbody>' +
+    r.por_cc.map(function (c) { return '<tr><td class="l"><b>' + esc(c.cc) + '</b></td>' + [0, 1, 2].map(function (i) { return '<td class="num">' + fmt(c.antes[i]) + '</td><td class="num">' + fmt(c.despues[i]) + ' ' + dif(c.despues[i], c.antes[i]) + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table></div>';
+  if (r.nuevas_ao.length) h += '<h3>Actividades nuevas (se crearán)</h3><ul class="cal-l">' + r.nuevas_ao.map(function (a) { return '<li><b>' + esc(a.cc) + '</b> · ' + esc(a.finalidad || a.cu) + ' <span class="hint">' + esc(a.cu) + ' · S/ ' + a.apm.map(fmt).join(' / ') + '</span></li>'; }).join('') + '</ul>';
+  if (r.sin_ao.length) h += '<h3>Metas sin actividad en el POI (no se cargan)</h3><p class="hint">El archivo no trae su centro de costo (columna S.UO) o no existe en el POI. Agrégalo en el Excel y vuelve a cargar.</p><ul class="cal-l">' + r.sin_ao.map(function (a) { return '<li>' + esc(a.finalidad || a.cu) + ' <span class="hint">' + esc(a.cu) + ' · S/ ' + a.apm.map(fmt).join(' / ') + '</span></li>'; }).join('') + '</ul>';
+  if (r.excesos.length) h += '<h3>PM3 priorizada por encima del nuevo techo</h3><p class="hint">Estas áreas deberán ajustar su programación (lo que exceda va como propuesta no priorizada) antes de volver a guardar.</p><div class="tw"><table><thead><tr><th class="l">Centro de costo · actividad</th><th>Clasificador</th><th>Año</th><th>PM3 (S/)</th><th>Nuevo techo (S/)</th></tr></thead><tbody>' +
+    r.excesos.slice(0, 80).map(function (x) { return '<tr><td class="l"><b>' + esc(x.cc) + '</b> · ' + esc(x.id_ao) + '</td><td class="mono" style="text-align:left">' + esc(x.clasificador) + '</td><td>' + x.anio + '</td><td class="num">' + fmt(x.pm3) + '</td><td class="num dn">' + fmt(x.apm) + '</td></tr>'; }).join('') +
+    (r.excesos.length > 80 ? '<tr><td class="l" colspan="5">… y ' + (r.excesos.length - 80) + ' más</td></tr>' : '') + '</tbody></table></div>';
+  if (r.aplicado) {
+    var x = r.resultado || {};
+    return h + '<p class="msg ok">APM aplicada: ' + x.actualizadas + ' partidas actualizadas, ' + x.nuevas + ' nuevas, ' + x.a_cero + ' en 0 y ' + x.aos_nuevas + ' actividades nuevas. Quedó en el Historial.</p>';
+  }
+  var nada = !P.cambian && !P.nuevas && !P.a_cero && !r.nuevas_ao.length;
+  return h + '<div class="acts">' + (nada ? '<span class="msg ok">El archivo es igual a la APM cargada: no hay nada que aplicar.</span>' : '<button class="btn" type="button" id="bApmGo">Aplicar APM al periodo ' + YS[0] + '–' + YS[2] + '</button>') + '<button class="btn sec" type="button" id="bApmX">' + (nada ? 'Cerrar' : 'Cancelar') + '</button></div>';
+}
+function enlazarApm() {
+  if (!$('fApm')) return;
+  $('fApm').onchange = function () { var f = this.files[0]; this.value = ''; if (f) leerApm(f); };
+  if ($('bApmX')) $('bApmX').onclick = function () { S.apm = null; pintarPanel(); };
+  if ($('bApmGo')) $('bApmGo').onclick = function () {
+    var st = S.apm, r = st.res;
+    if (!confirm('Se aplicará la APM ' + st.anio + ' al periodo ' + YS[0] + '–' + YS[2] + ':\n\n• ' + r.partidas.cambian + ' partidas cambian de techo\n• ' + r.partidas.nuevas + ' partidas nuevas\n• ' + r.partidas.a_cero + ' partidas pasan a 0\n• ' + r.nuevas_ao.length + ' actividades nuevas' + (r.excesos.length ? '\n\n' + r.excesos.length + ' partidas quedarán con la PM3 por encima del techo.' : '') + '\n\n¿Continuar?')) return;
+    this.disabled = true; $('apmMsg').className = 'msg'; $('apmMsg').textContent = 'Aplicando…';
+    api('cargarAPM', { modo: 'aplicar', anio: st.anio, archivo: st.archivo, filas: st.filas }).then(function (j) {
+      if (!j.ok) { S.apm.msg = (j.error || 'No se pudo aplicar.') + (j.detalle ? ' ' + j.detalle.join(' ') : ''); S.apm.mal = true; pintarPanel(); return; }
+      S.apm = { res: j, archivo: st.archivo, anio: st.anio, msg: st.archivo };
+      cargar();
+    }).catch(function () { S.apm.msg = 'Sin conexión: no se aplicó.'; S.apm.mal = true; pintarPanel(); });
+  };
+}
+// Hoja DATA_APM del módulo del MEF → partidas (meta × rubro × clasificador)
+function apmFilas(rows) {
+  var h = -1, up = function (x) { return String(x == null ? '' : x).trim().toUpperCase(); };
+  for (var i = 0; i < Math.min(rows.length, 6); i++) { var u = rows[i].map(up); if (u.indexOf('PRESUPUESTO') >= 0 && u.indexOf('GENERICA_CODIGO') >= 0 && u.indexOf('META') >= 0) { h = i; break; } }
+  if (h < 0) return null;
+  var H = rows[h].map(function (x) { return String(x == null ? '' : x).trim(); }), HU = H.map(up);
+  var col = function (k) { var j = H.indexOf(k); return j >= 0 ? j : HU.indexOf(k.toUpperCase()); };
+  var C = {}; ['ANO_EJE', 'PROGRAMA_PRESUPUESTAL', 'TIPO_PROD_DESC', 'PRODUCTO_PROYECTO', 'PRODUCTO_DESCRIPCION', 'ACTIVIDAD_OBRA', 'ACTIVIDAD_NOMBRE', 'COD_FUNCION', 'DIVISION_FUNCIONAL', 'GRUPO_FUNCIONAL',
+    'META', 'FINALIDAD', 'FINALIDAD_NOMBRE', 'UNIDAD_NOMBRE', 'DEPARTAMENTO_NOMBRE', 'PROVINCIA_NOMBRE', 'DISTRITO_NOMBRE', 'FUENTE_CODIGO', 'FUENTE_FINANC', 'COD_RUBRO',
+    'GENERICA_CODIGO', 'SUB_GEN_CODIGO', 'SUB_GEN_DET_CODIGO', 'ESPECIFICA_CODIGO', 'ESP_DETALLE_CODIGO', 'ESPECIFICA_DETALLE', 'PRESUPUESTO', 'PRESUPUESTO 2', 'PRESUPUESTO 3', 'RESERVA',
+    'Concepto 1', 'Concepto 2', 'S.UO', 'S.ORG.', 'UO NOMBRE COMPLETO', 'SF_TEMP', 'tipo'].forEach(function (k) { C[k] = col(k); });
+  ['PRESUPUESTO 2', 'PRESUPUESTO 3', 'SUB_GEN_CODIGO', 'ESP_DETALLE_CODIGO', 'COD_RUBRO', 'FINALIDAD', 'ACTIVIDAD_OBRA'].forEach(function (k) { if (C[k] < 0) throw new Error('Falta la columna ' + k + ' en la hoja de la APM.'); });
+  var v = function (R, k) { return C[k] >= 0 && R[C[k]] != null ? String(R[C[k]]).trim() : ''; };
+  var z = function (R, k, n) { var t = v(R, k).replace(/\.0+$/, ''); return /^\d+$/.test(t) ? t.padStart(n, '0') : t; };
+  var e = function (R, k) { var n = parseInt(v(R, k), 10); return isNaN(n) ? '' : String(n); };
+  var filas = [], anio = '';
+  for (var r = h + 1; r < rows.length; r++) {
+    var R = rows[r]; if (!v(R, 'PROGRAMA_PRESUPUESTAL')) continue;
+    anio = anio || v(R, 'ANO_EJE');
+    var cl = '2.' + ['GENERICA_CODIGO', 'SUB_GEN_CODIGO', 'SUB_GEN_DET_CODIGO', 'ESPECIFICA_CODIGO', 'ESP_DETALLE_CODIGO'].map(function (k) { return e(R, k); }).join('.');
+    filas.push({
+      cu_efp: [z(R, 'PROGRAMA_PRESUPUESTAL', 4), z(R, 'PRODUCTO_PROYECTO', 7), z(R, 'ACTIVIDAD_OBRA', 7), z(R, 'COD_FUNCION', 2), z(R, 'DIVISION_FUNCIONAL', 3), z(R, 'GRUPO_FUNCIONAL', 4), z(R, 'FINALIDAD', 7), e(R, 'META')].join('-'),
+      rubro: e(R, 'COD_RUBRO'), ff: v(R, 'FUENTE_CODIGO') + '-' + v(R, 'FUENTE_FINANC'), clasificador: cl, clasificador_desc: cl + '-' + v(R, 'ESPECIFICA_DETALLE'),
+      reserva: v(R, 'RESERVA'), concepto1: v(R, 'Concepto 1'), concepto2: v(R, 'Concepto 2'),
+      a1: pn(v(R, 'PRESUPUESTO')) || 0, a2: pn(v(R, 'PRESUPUESTO 2')) || 0, a3: pn(v(R, 'PRESUPUESTO 3')) || 0,
+      cc: v(R, 'S.UO'), organo: v(R, 'S.ORG.'), uo: v(R, 'UO NOMBRE COMPLETO'), sf: z(R, 'SF_TEMP', 4),
+      ao: { tipo: v(R, 'tipo') || (up(v(R, 'TIPO_PROD_DESC')) === 'PROYECTO' ? 'Inversiones' : 'Actividades'), cod_producto: v(R, 'PRODUCTO_PROYECTO'), producto: v(R, 'PRODUCTO_DESCRIPCION'),
+            programa: z(R, 'PROGRAMA_PRESUPUESTAL', 4), actividad_efp: v(R, 'ACTIVIDAD_OBRA') + '.' + v(R, 'ACTIVIDAD_NOMBRE'), funcion: z(R, 'COD_FUNCION', 2),
+            div_fun: z(R, 'DIVISION_FUNCIONAL', 3), grp_fun: z(R, 'GRUPO_FUNCIONAL', 4), finalidad: z(R, 'FINALIDAD', 7) + '.' + v(R, 'FINALIDAD_NOMBRE'),
+            unidad_medida: v(R, 'UNIDAD_NOMBRE'), departamento: v(R, 'DEPARTAMENTO_NOMBRE'), provincia: v(R, 'PROVINCIA_NOMBRE'), distrito: v(R, 'DISTRITO_NOMBRE') }
+    });
+  }
+  return { anio: anio, filas: filas };
+}
+function leerApm(file) {
+  S.apm = { msg: 'Leyendo ' + file.name + '…' }; pintarPanel();
+  cargarXlsx(function () {
+    leerArchivo(file).then(function (buf) {
+      try {
+        if (!buf) throw new Error('No se pudo leer el archivo.');
+        var wb = XLSX.read(buf, { type: 'array' }), out = null;
+        var hojas = wb.SheetNames.slice().sort(function (a, b) { return (b.toUpperCase() === 'DATA_APM') - (a.toUpperCase() === 'DATA_APM'); });
+        for (var i = 0; i < hojas.length && !(out && out.filas.length); i++) out = apmFilas(XLSX.utils.sheet_to_json(wb.Sheets[hojas[i]], { header: 1, raw: true, defval: '', blankrows: false }));
+        if (!out || !out.filas.length) throw new Error('No encontré la hoja de la APM (columnas META, GENERICA_CODIGO, PRESUPUESTO, PRESUPUESTO 2 y PRESUPUESTO 3).');
+        S.apm = { archivo: file.name, anio: out.anio, filas: out.filas, msg: file.name + ' · APM ' + out.anio + ' · ' + out.filas.length + ' filas · calculando el resumen…' }; pintarPanel();
+        api('cargarAPM', { modo: 'vista', anio: out.anio, archivo: file.name, filas: out.filas }).then(function (j) {
+          if (!S.apm || S.apm.archivo !== file.name) return;
+          if (!j.ok) { S.apm.msg = (j.error || 'No se pudo revisar.') + (j.detalle ? ' ' + j.detalle.join(' ') : ''); S.apm.mal = true; }
+          else { S.apm.res = j; S.apm.msg = file.name + ' · APM ' + out.anio + '–' + (+out.anio + 2) + ' · ' + out.filas.length + ' filas'; }
+          pintarPanel();
+        }).catch(function () { S.apm.msg = 'Sin conexión.'; S.apm.mal = true; pintarPanel(); });
+      } catch (e) { S.apm = { msg: e.message, mal: true }; pintarPanel(); }
+    });
+  });
 }
 function pintarProg() {
   var d = S.data;
