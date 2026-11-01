@@ -1,9 +1,9 @@
 # Supabase (plan gratuito) pausa la base si pasa 7 días sin uso.
-# Este proceso la consulta cada 3 días para que siga activa.
+# Este proceso la consulta todos los días para que siga activa.
 name: Mantener activa la base
 on:
   schedule:
-    - cron: '17 13 */3 * *'
+    - cron: '17 13 * * *'
   workflow_dispatch:
 jobs:
   ping:
