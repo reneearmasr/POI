@@ -1,9 +1,10 @@
-# Supabase (plan gratuito) pausa la base si pasa 7 días sin uso.
-# Este proceso la consulta todos los días para que siga activa.
+# Supabase (plan gratuito) pausa la base si en 7 días no ve "actividad suficiente".
+# Este proceso la consulta cada 4 horas (3 llamadas por vez); cada llamada lee
+# las actividades y deja un registro en poi.latido.
 name: Mantener activa la base
 on:
   schedule:
-    - cron: '17 13 * * *'
+    - cron: '17 */4 * * *'
   workflow_dispatch:
 jobs:
   ping:
@@ -14,8 +15,9 @@ jobs:
         run: |
           node -e "
             global.window = {}; require('./config.js'); const c = window.POI_CONFIG;
-            fetch(c.url + '/rest/v1/rpc/poi_api', { method: 'POST',
+            const llamar = () => fetch(c.url + '/rest/v1/rpc/poi_api', { method: 'POST',
               headers: { apikey: c.key, 'Content-Type': 'application/json' },
-              body: JSON.stringify({ p: { accion: 'ping' } }) })
-            .then(r => r.text()).then(t => { console.log(t); if (!t.includes('\"ok\": true') && !t.includes('\"ok\":true')) process.exit(1); });
+              body: JSON.stringify({ p: { accion: 'ping' } }) }).then(r => r.text());
+            (async () => { for (let i = 0; i < 3; i++) { const t = await llamar(); console.log(t);
+              if (!/\"ok\": ?true/.test(t)) process.exit(1); await new Promise(r => setTimeout(r, 20000)); } })();
           "
